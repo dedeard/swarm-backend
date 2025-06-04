@@ -1,8 +1,11 @@
+// Generator and Datasource
+
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
@@ -10,11 +13,202 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Define your models here
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+//                  Enums                         //
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+// PermissionLevel Enum
+
+enum PermissionLevel {
+  VIEW
+  EDIT
+  ADMIN
+}
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+//                  Models                        //
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+// Agent Model
+
+model Agent {
+  id                    String                      @id @default(uuid()) @map("agent_id") @db.Uuid
+  componentAssociations ComponentAgentAssociation[]
+
+  @@map("swarm-agent.agents")
+}
+
+// Company Model
+
+model Company {
+  id                  String                       @id @default(uuid()) @map("company_id") @db.Uuid
+  components          Component[]
+  componentRoleShares ComponentSharesCompanyRole[]
+
+  @@map("swarm-company.companies")
+}
+
+// Role Model
+
+model Role {
+  id                  String                       @id @default(uuid()) @map("role_id") @db.Uuid
+  componentRoleShares ComponentSharesCompanyRole[]
+
+  @@map("swarm-rbac.roles")
+}
+
+// Component Models
+
+model Component {
+  id                 String   @id @default(uuid()) @map("component_id") @db.Uuid
+  sourceId           String?  @map("source_id") @db.Uuid
+  typeId             String?  @map("type_id") @db.Uuid
+  companyId          String?  @map("company_id") @db.Uuid
+  name               String
+  displayName        String?  @map("display_name")
+  description        String?
+  category           String?
+  componentType      String?  @map("component_type")
+  packageUrl         String?  @map("package_url")
+  storybookMetadata  Json?    @map("storybook_metadata") @db.JsonB
+  additionalMetadata Json?    @map("additional_metadata") @db.JsonB
+  isPublic           Boolean  @default(false) @map("is_public")
+  isActive           Boolean  @default(true) @map("is_active")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  source            ComponentSource?             @relation(fields: [sourceId], references: [id])
+  type              ComponentType?               @relation(fields: [typeId], references: [id])
+  company           Company?                     @relation(fields: [companyId], references: [id])
+  versions          ComponentVersion[]
+  agentAssociations ComponentAgentAssociation[]
+  userShares        ComponentSharesUser[]
+  companyRoleShares ComponentSharesCompanyRole[]
+
+  @@index([sourceId])
+  @@index([typeId])
+  @@index([companyId])
+  @@map("swarm-component.components")
+}
+
+// ComponentVersion Model
+
+model ComponentVersion {
+  id              String   @id @default(uuid()) @map("version_id") @db.Uuid
+  componentId     String   @map("component_id") @db.Uuid
+  versionNumber   String   @map("version_number")
+  changelog       String?
+  packageUrl      String?  @map("package_url")
+  versionMetadata Json?    @map("version_metadata") @db.JsonB
+  isLatest        Boolean  @default(false) @map("is_latest")
+  isStable        Boolean  @default(false) @map("is_stable")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  component Component @relation(fields: [componentId], references: [id])
+
+  @@index([componentId])
+  @@map("swarm-component.component_versions")
+}
+
+// ComponentType Model
+
+model ComponentType {
+  id          String   @id @default(uuid()) @map("type_id") @db.Uuid
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  components Component[]
+
+  @@map("swarm-component.component_types")
+}
+
+// ComponentSource Model
+
+model ComponentSource {
+  id          String   @id @default(uuid()) @map("source_id") @db.Uuid
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  components Component[]
+
+  @@map("swarm-component.component_sources")
+}
+
+// ComponentAgentAssociation Model
+
+model ComponentAgentAssociation {
+  id          String   @id @default(uuid()) @map("association_id") @db.Uuid
+  componentId String   @map("component_id") @db.Uuid
+  agentId     String   @map("agent_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  component Component @relation(fields: [componentId], references: [id])
+  agent     Agent     @relation(fields: [agentId], references: [id])
+
+  @@index([componentId])
+  @@index([agentId])
+  @@map("swarm-component.component_agent_associations")
+}
+
+// ComponentSharesUser Model
+
+model ComponentSharesUser {
+  id              String          @id @default(uuid()) @map("share_id") @db.Uuid
+  componentId     String          @map("component_id") @db.Uuid
+  userId          Int             @map("user_id")
+  permissionLevel PermissionLevel @map("permission_level")
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  component Component @relation(fields: [componentId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@index([componentId])
+  @@index([userId])
+  @@map("swarm-component.component_shares_users")
+}
+
+// ComponentSharesCompanyRole Model
+
+model ComponentSharesCompanyRole {
+  id              String          @id @default(uuid()) @map("share_id") @db.Uuid
+  componentId     String          @map("component_id") @db.Uuid
+  companyId       String          @map("company_id") @db.Uuid
+  roleId          String          @map("role_id") @db.Uuid
+  permissionLevel PermissionLevel @map("permission_level")
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  component Component @relation(fields: [componentId], references: [id])
+  company   Company   @relation(fields: [companyId], references: [id])
+  role      Role      @relation(fields: [roleId], references: [id])
+
+  @@index([componentId])
+  @@index([companyId])
+  @@index([roleId])
+  @@map("swarm-component.component_shares_company_roles")
+}
+
+// User Model
+
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
   name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  componentShares ComponentSharesUser[]
+
+  @@map("public.users")
 }
