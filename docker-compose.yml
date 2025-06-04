@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: swarm-component-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: swarm_component_db
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - swarm-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: swarm-component-api
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/swarm_component_db?schema=public
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - swarm-network
+    command: sh -c "npx prisma migrate dev --name init && npm run start:dev"
+
+networks:
+  swarm-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
