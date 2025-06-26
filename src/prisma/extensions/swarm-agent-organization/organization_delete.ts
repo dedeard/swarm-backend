@@ -223,7 +223,7 @@ export const deleteOrganizationExtension = Prisma.defineExtension({
         return await ExtensionContext.execute(
           this,
           async () => {
-            const results = [];
+            const results: any[] = [];
 
             for (const organizationId of organizationIds) {
               try {

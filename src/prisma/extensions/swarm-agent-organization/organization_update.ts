@@ -219,7 +219,17 @@ export const updateOrganizationExtension = Prisma.defineExtension({
         return await ExtensionContext.execute(
           this,
           async () => {
-            const results = [];
+            type BulkUpdateResult =
+              | {
+                  success: true;
+                  organization: any;
+                }
+              | {
+                  success: false;
+                  organization_id: string;
+                  error: string;
+                };
+            const results: BulkUpdateResult[] = [];
             for (const organizationId of input.organization_ids) {
               try {
                 // Validate access to each organization
