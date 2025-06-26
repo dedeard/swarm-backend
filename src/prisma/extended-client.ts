@@ -3,7 +3,6 @@ import { createAgentExtension } from './extensions/swarm-agent-agent/agent_creat
 import { agentDeleteExtension } from './extensions/swarm-agent-agent/agent_delete';
 import { getAgentExtension } from './extensions/swarm-agent-agent/agent_get';
 import { agentUpdateExtension } from './extensions/swarm-agent-agent/agent_update';
-
 const prisma = new PrismaClient();
 
 const extendedClient = prisma
