@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Agent as PrismaAgent } from '@prisma/client';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AuthGuard } from 'src/auth/auth.guard';
 import { User } from '../auth/user.decorator';
 import { AgentsService } from './agents.service';
 import { CreateAgentDto } from './dto/create-agent.dto';
@@ -22,7 +22,7 @@ import { Agent as AgentEntity } from './entities/agent.entity';
 
 @ApiTags('agents')
 @Controller('agents')
-@UseGuards(JwtAuthGuard)
+@UseGuards(AuthGuard)
 export class AgentsController {
   constructor(private readonly agentsService: AgentsService) {}
 
