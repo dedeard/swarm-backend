@@ -9,9 +9,12 @@ import {
   ParseUUIDPipe,
   Post,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Agent as PrismaAgent } from '@prisma/client';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { User } from '../auth/user.decorator';
 import { AgentsService } from './agents.service';
 import { CreateAgentDto } from './dto/create-agent.dto';
 import { UpdateAgentDto } from './dto/update-agent.dto';
@@ -19,6 +22,7 @@ import { Agent as AgentEntity } from './entities/agent.entity';
 
 @ApiTags('agents')
 @Controller('agents')
+@UseGuards(JwtAuthGuard)
 export class AgentsController {
   constructor(private readonly agentsService: AgentsService) {}
 
@@ -33,9 +37,10 @@ export class AgentsController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Invalid input data.',
   })
-  create(@Body() createAgentDto: CreateAgentDto): Promise<PrismaAgent> {
-    // TODO: Replace with actual user ID from request
-    const userId = '00000000-0000-0000-0000-000000000000';
+  create(
+    @Body() createAgentDto: CreateAgentDto,
+    @User('userId') userId: string,
+  ): Promise<PrismaAgent> {
     return this.agentsService.create(createAgentDto, userId);
   }
 
@@ -85,9 +90,8 @@ export class AgentsController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateAgentDto: UpdateAgentDto,
+    @User('userId') userId: string,
   ): Promise<PrismaAgent> {
-    // TODO: Replace with actual user ID from request
-    const userId = '00000000-0000-0000-0000-000000000000';
     return this.agentsService.update(id, updateAgentDto, userId);
   }
 

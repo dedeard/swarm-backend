@@ -21,9 +21,14 @@ async function bootstrap() {
     .setDescription('The Swarm Component API description')
     .setVersion('1.0')
     .addTag('swarm-component')
+    .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('api', app, document, {
+    swaggerOptions: {
+      security: [{ bearer: [] }],
+    },
+  });
 
   await app.listen(8080);
 }
