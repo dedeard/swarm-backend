@@ -31,6 +31,40 @@
 $ npm install
 ```
 
+## Prisma Schema
+
+This project uses a modular approach to Prisma schema definition. Instead of having a single large `schema.prisma` file, the models are split into separate files for better organization and maintainability.
+
+### Structure
+
+The Prisma models are organized in the `prisma/models` directory, with each model in its own file:
+
+```
+prisma/models/
+├── agent/
+│   └── agents.prisma
+├── component/
+│   └── components.prisma
+└── ...
+```
+
+### Working with Prisma
+
+When working with Prisma, use the following npm scripts:
+
+```bash
+# Generate the schema.prisma file from the model files
+$ npm run prisma:generate-schema
+
+# Generate the Prisma client (runs generate-schema first)
+$ npm run prisma:generate
+
+# Run migrations (runs generate-schema first)
+$ npm run prisma:migrate
+```
+
+For more details, see the [Prisma Models README](prisma/models/README.md).
+
 ## Compile and run the project
 
 ```bash
