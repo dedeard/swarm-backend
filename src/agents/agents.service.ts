@@ -20,7 +20,7 @@ export class AgentsService {
     const agent = await this.prisma.agent.getAgentById(id);
 
     if (!agent) {
-      return null;
+      throw new NotFoundException(`Agent with ID ${id} not found`);
     }
 
     return agent;
