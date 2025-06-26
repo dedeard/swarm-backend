@@ -3,20 +3,20 @@
  * Simple agent creation without admin context
  */
 
-import { Prisma } from '@prisma/client'
+import { Prisma } from '@prisma/client';
 
 // Agent input data type
-interface AgentCreateInput {
-  agent_name: string
-  description?: string
-  company_id: string
-  on_status?: boolean
-  is_public?: boolean
-  use_memory?: boolean
-  use_tool?: boolean
-  agent_style?: string
-  model_default?: string
-  [key: string]: any
+export interface AgentCreateInput {
+  agent_name: string;
+  description?: string;
+  company_id?: string;
+  on_status?: boolean;
+  is_public?: boolean;
+  use_memory?: boolean;
+  use_tool?: boolean;
+  agent_style?: string;
+  model_default?: string;
+  [key: string]: any;
 }
 
 /**
@@ -35,18 +35,18 @@ export const createAgentExtension = Prisma.defineExtension((client) => {
           const agentData = {
             ...data,
             user_id: userId,
-          }
+          };
 
-          console.log(`Creating agent: ${agentData.agent_name}`)
-          
+          console.log(`Creating agent: ${agentData.agent_name}`);
+
           // Create the agent directly without admin context
           const createdAgent = await this.create({
             data: agentData,
-          })
-          
-          return createdAgent
-        }
-      }
-    }
-  })
-})
+          });
+
+          return createdAgent;
+        },
+      },
+    },
+  });
+});

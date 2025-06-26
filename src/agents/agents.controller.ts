@@ -11,10 +11,11 @@ import {
   Put,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Agent as PrismaAgent } from '@prisma/client';
 import { AgentsService } from './agents.service';
 import { CreateAgentDto } from './dto/create-agent.dto';
 import { UpdateAgentDto } from './dto/update-agent.dto';
-import { Agent } from './entities/agent.entity';
+import { Agent as AgentEntity } from './entities/agent.entity';
 
 @ApiTags('agents')
 @Controller('agents')
@@ -26,14 +27,16 @@ export class AgentsController {
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'The agent has been successfully created.',
-    type: Agent,
+    type: AgentEntity,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
     description: 'Invalid input data.',
   })
-  create(@Body() createAgentDto: CreateAgentDto): Promise<Agent> {
-    return this.agentsService.create(createAgentDto);
+  create(@Body() createAgentDto: CreateAgentDto): Promise<PrismaAgent> {
+    // TODO: Replace with actual user ID from request
+    const userId = '00000000-0000-0000-0000-000000000000';
+    return this.agentsService.create(createAgentDto, userId);
   }
 
   @Get()
@@ -41,9 +44,9 @@ export class AgentsController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Return all agents',
-    type: [Agent],
+    type: [AgentEntity],
   })
-  findAll(): Promise<Agent[]> {
+  findAll(): Promise<PrismaAgent[]> {
     return this.agentsService.findAll();
   }
 
@@ -53,13 +56,13 @@ export class AgentsController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Return the agent with the specified id',
-    type: Agent,
+    type: AgentEntity,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
     description: 'Agent not found',
   })
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Agent | null> {
+  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<PrismaAgent | null> {
     return this.agentsService.findOne(id);
   }
 
@@ -69,7 +72,7 @@ export class AgentsController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'The agent has been successfully updated.',
-    type: Agent,
+    type: AgentEntity,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
@@ -82,8 +85,10 @@ export class AgentsController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateAgentDto: UpdateAgentDto,
-  ): Promise<Agent> {
-    return this.agentsService.update(id, updateAgentDto);
+  ): Promise<PrismaAgent> {
+    // TODO: Replace with actual user ID from request
+    const userId = '00000000-0000-0000-0000-000000000000';
+    return this.agentsService.update(id, updateAgentDto, userId);
   }
 
   @Delete(':id')
@@ -92,14 +97,14 @@ export class AgentsController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'The agent has been successfully deleted.',
-    type: Agent,
+    type: AgentEntity,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
     description: 'Agent not found',
   })
   @HttpCode(HttpStatus.OK)
-  remove(@Param('id', ParseUUIDPipe) id: string): Promise<Agent> {
+  remove(@Param('id', ParseUUIDPipe) id: string): Promise<any> {
     return this.agentsService.remove(id);
   }
 }

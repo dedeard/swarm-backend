@@ -3,17 +3,17 @@
  * Simple agent retrieval without admin context
  */
 
-import { Prisma } from '@prisma/client'
+import { Prisma } from '@prisma/client';
 
 // Agent filters type
-interface AgentFilters {
-  agent_id?: string
-  agent_name?: string
-  company_id?: string
-  user_id?: string
-  is_public?: boolean
-  on_status?: boolean
-  [key: string]: any
+export interface AgentFilters {
+  agent_id?: string;
+  agent_name?: string;
+  company_id?: string;
+  user_id?: string;
+  is_public?: boolean;
+  on_status?: boolean;
+  [key: string]: any;
 }
 
 /**
@@ -34,27 +34,27 @@ export const getAgentExtension = Prisma.defineExtension((client) => {
             orderBy: {
               created_at: 'desc',
             },
-          })
-          
-          return agents
+          });
+
+          return agents;
         },
 
         /**
          * Get a single agent by ID - simplified version without admin context
          */
         async getAgentById(this: any, agentId: string) {
-          console.log(`Retrieving agent with ID: ${agentId}`)
-          
+          console.log(`Retrieving agent with ID: ${agentId}`);
+
           // Get agent by ID directly
           const agent = await this.findUnique({
             where: {
               agent_id: agentId,
             },
-          })
-          
-          return agent
-        }
-      }
-    }
-  })
-})
+          });
+
+          return agent;
+        },
+      },
+    },
+  });
+});
