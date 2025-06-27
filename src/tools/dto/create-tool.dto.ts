@@ -1,8 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Prisma } from '@prisma/client';
 import {
   IsBoolean,
-  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
@@ -11,9 +9,7 @@ import {
 
 export class CreateToolDto {
   @ApiProperty({
-    description:
-      'Owner user ID. If not provided, it will be the authenticated user.',
-    example: '00000000-0000-0000-0000-000000000000',
+    description: 'Tool owner',
     required: false,
   })
   @IsUUID()
@@ -24,16 +20,16 @@ export class CreateToolDto {
     description: 'Associated company for multi-tenancy',
     required: false,
   })
+  @IsUUID()
   @IsOptional()
-  company?: Prisma.CompanyCreateNestedOneWithoutToolsInput;
+  company_id?: string;
 
-  @ApiProperty({ description: 'Tool name', example: 'Calculator' })
+  @ApiProperty({ description: 'Tool display name' })
   @IsString()
   name: string;
 
   @ApiProperty({
     description: 'Tool description',
-    example: 'A simple calculator tool',
     required: false,
   })
   @IsString()
@@ -41,8 +37,7 @@ export class CreateToolDto {
   description?: string;
 
   @ApiProperty({
-    description: 'Tool version',
-    example: '1.0.0',
+    description: 'Current version',
     required: false,
   })
   @IsString()
@@ -51,7 +46,6 @@ export class CreateToolDto {
 
   @ApiProperty({
     description: 'Command to install the tool',
-    example: 'npm install calculator-tool',
     required: false,
   })
   @IsString()
@@ -60,7 +54,6 @@ export class CreateToolDto {
 
   @ApiProperty({
     description: 'Port number for the tool',
-    example: '8080',
     required: false,
   })
   @IsString()
@@ -68,8 +61,7 @@ export class CreateToolDto {
   port?: string;
 
   @ApiProperty({
-    description: 'Connection method',
-    example: 'sse',
+    description: 'Connection method (e.g., sse, stdio)',
     required: false,
   })
   @IsString()
@@ -78,7 +70,6 @@ export class CreateToolDto {
 
   @ApiProperty({
     description: 'Environment variables configuration',
-    example: { API_KEY: 'your-api-key' },
     required: false,
   })
   @IsOptional()
@@ -86,7 +77,6 @@ export class CreateToolDto {
 
   @ApiProperty({
     description: 'Required environment variables',
-    example: { REQUIRED_VAR: 'must-have-value' },
     required: false,
   })
   @IsOptional()
@@ -94,7 +84,6 @@ export class CreateToolDto {
 
   @ApiProperty({
     description: 'Tool availability status',
-    example: 'active',
     required: false,
   })
   @IsString()
@@ -103,7 +92,6 @@ export class CreateToolDto {
 
   @ApiProperty({
     description: 'Tool logo URL',
-    example: 'https://example.com/tool-logo.png',
     required: false,
   })
   @IsUrl()
@@ -112,7 +100,6 @@ export class CreateToolDto {
 
   @ApiProperty({
     description: 'URL-friendly identifier',
-    example: 'calculator-tool',
     required: false,
   })
   @IsString()
@@ -120,8 +107,7 @@ export class CreateToolDto {
   slug?: string;
 
   @ApiProperty({
-    description: 'Tool website URL',
-    example: 'https://example.com/calculator-tool',
+    description: 'Tool website',
     required: false,
   })
   @IsUrl()
@@ -129,8 +115,7 @@ export class CreateToolDto {
   website?: string;
 
   @ApiProperty({
-    description: 'Tool developer or vendor',
-    example: 'Example Tech',
+    description: 'Tool developer/vendor',
     required: false,
   })
   @IsString()
@@ -139,7 +124,6 @@ export class CreateToolDto {
 
   @ApiProperty({
     description: 'Source code repository',
-    example: 'https://github.com/example/calculator-tool',
     required: false,
   })
   @IsString()
@@ -148,7 +132,6 @@ export class CreateToolDto {
 
   @ApiProperty({
     description: 'License type',
-    example: 'MIT',
     required: false,
   })
   @IsString()
@@ -156,8 +139,7 @@ export class CreateToolDto {
   license?: string;
 
   @ApiProperty({
-    description: 'Extended tool description',
-    example: 'A comprehensive calculator tool with advanced features',
+    description: 'Extended description',
     required: false,
   })
   @IsString()
@@ -166,7 +148,6 @@ export class CreateToolDto {
 
   @ApiProperty({
     description: 'Security considerations',
-    example: 'Requires secure API key management',
     required: false,
   })
   @IsString()
@@ -175,7 +156,6 @@ export class CreateToolDto {
 
   @ApiProperty({
     description: 'Usage recommendations',
-    example: { best_practices: ['Use in secure environments'] },
     required: false,
   })
   @IsOptional()
@@ -183,38 +163,16 @@ export class CreateToolDto {
 
   @ApiProperty({
     description: 'Available functions/capabilities',
-    example: { add: 'Adds two numbers', subtract: 'Subtracts two numbers' },
     required: false,
   })
   @IsOptional()
   functions?: Record<string, any>;
 
   @ApiProperty({
-    description: 'Cost of using the tool',
-    example: 0.01,
-    type: 'number',
-    format: 'decimal',
-    required: false,
-  })
-  @IsNumber()
-  @IsOptional()
-  cost?: number;
-
-  @ApiProperty({
     description: 'Public visibility flag',
-    example: false,
     required: false,
   })
   @IsBoolean()
   @IsOptional()
   is_public?: boolean;
-
-  @ApiProperty({
-    description: 'Tool active/inactive status',
-    example: true,
-    required: false,
-  })
-  @IsBoolean()
-  @IsOptional()
-  on_status?: boolean;
 }

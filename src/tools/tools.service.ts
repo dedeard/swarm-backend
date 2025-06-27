@@ -14,7 +14,7 @@ export class ToolsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(createToolDto: CreateToolDto, userId: string): Promise<Tool> {
-    const { name, company } = createToolDto;
+    const { name, company_id } = createToolDto;
 
     if (!name || name.trim().length === 0) {
       throw new BadRequestException('Tool name is required');
@@ -24,8 +24,8 @@ export class ToolsService {
       name,
     };
 
-    if (company) {
-      where.company_id = company.create?.company_id;
+    if (company_id) {
+      where.company_id = company_id;
     } else {
       where.user_id = userId;
     }
