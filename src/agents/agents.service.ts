@@ -1,23 +1,33 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Agent } from '@prisma/client';
-import extendedClient from '../prisma/extended-client';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateAgentDto } from './dto/create-agent.dto';
 import { UpdateAgentDto } from './dto/update-agent.dto';
 
 @Injectable()
 export class AgentsService {
-  private readonly prisma = extendedClient;
-
+  constructor(private prisma: PrismaService) {}
   async create(createAgentDto: CreateAgentDto, userId: string): Promise<Agent> {
-    return this.prisma.agent.createAgent(createAgentDto, userId);
+    const agentData = {
+      ...createAgentDto,
+      user_id: userId,
+    };
+
+    console.log(`Creating agent: ${agentData.agent_name}`);
+
+    return this.prisma.agent.create({
+      data: agentData,
+    });
   }
 
   async findAll(): Promise<Agent[]> {
-    return this.prisma.agent.getAgents();
+    return this.prisma.agent.findMany();
   }
 
   async findOne(id: string): Promise<Agent | null> {
-    const agent = await this.prisma.agent.getAgentById(id);
+    const agent = await this.prisma.agent.findUnique({
+      where: { agent_id: id },
+    });
 
     if (!agent) {
       throw new NotFoundException(`Agent with ID ${id} not found`);
@@ -36,15 +46,20 @@ export class AgentsService {
       throw new NotFoundException(`Agent with ID ${id} not found`);
     }
 
-    return this.prisma.agent.updateAgent(id, updateAgentDto, userId);
+    return this.prisma.agent.update({
+      where: { agent_id: id },
+      data: updateAgentDto,
+    });
   }
 
-  async remove(id: string): Promise<any> {
+  async remove(id: string): Promise<Agent> {
     const existingAgent = await this.findOne(id);
     if (!existingAgent) {
       throw new NotFoundException(`Agent with ID ${id} not found`);
     }
 
-    return this.prisma.agent.deleteAgent(id);
+    return this.prisma.agent.delete({
+      where: { agent_id: id },
+    });
   }
 }
