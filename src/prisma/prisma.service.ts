@@ -6,6 +6,9 @@ export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
+  private static instance: PrismaService;
+  private isConnected: boolean = false;
+
   constructor() {
     super({
       log: ['query', 'info', 'warn', 'error'],
@@ -15,19 +18,35 @@ export class PrismaService
         },
       },
     });
+
+    // Reuse connection in Lambda environment
+    if (process.env.AWS_LAMBDA_FUNCTION_VERSION) {
+      if (!PrismaService.instance) {
+        PrismaService.instance = this;
+      }
+      return PrismaService.instance;
+    }
   }
 
   async onModuleInit(): Promise<void> {
-    try {
-      await this.$connect();
-    } catch (error) {
-      console.error('Failed to connect to the database:', error);
-      throw error;
+    if (!this.isConnected) {
+      try {
+        await this.$connect();
+        this.isConnected = true;
+        console.log('Successfully connected to the database');
+      } catch (error) {
+        console.error('Failed to connect to the database:', error);
+        throw error;
+      }
     }
   }
 
   async onModuleDestroy(): Promise<void> {
-    await this.$disconnect();
+    // Only disconnect if not running in Lambda
+    if (!process.env.AWS_LAMBDA_FUNCTION_VERSION) {
+      await this.$disconnect();
+      this.isConnected = false;
+    }
   }
 
   cleanDatabase(): void {

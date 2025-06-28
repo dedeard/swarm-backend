@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AgentCategory } from '@prisma/client';
-import { AuthGuard } from 'src/auth/auth.guard';
+import { AuthGuard } from '../auth/auth.guard';
 import { User } from '../auth/user.decorator';
 import { AgentCategoriesService } from './agent-categories.service';
 import { CreateAgentCategoryDto } from './dto/create-agent-category.dto';

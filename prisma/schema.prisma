@@ -4,6 +4,7 @@
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["multiSchema"]
+  binaryTargets   = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
@@ -12,7 +13,6 @@ datasource db {
   directUrl = env("DIRECT_URL")
   schemas   = ["swarm-agent", "swarm-company", "swarm-user", "swarm-rbac", "swarm-audit", "swarm-blog", "swarm-component", "swarm-cronjob", "swarm-file-storage", "swarm-legal", "swarm-llmstxt", "swarm-organization", "swarm-subscriptions", "swarm-team", "swarm-tool", "swarm-waitlist", "swarm-webhook", "swarm-workflow", "cache"]
 }
-
 
 // === USER-PERMISSION-CACHE ===
 // From: prisma/schemas/cache/user-permission-cache.prisma
@@ -23,18 +23,17 @@ datasource db {
 /// Permission cache for performance optimization
 model UserPermissionCache {
   user_id         String   @db.Uuid /// User whose permissions are cached
-  permission_name String   /// Permission being cached
-  has_permission  Boolean  /// Whether user has the permission
+  permission_name String /// Permission being cached
+  has_permission  Boolean /// Whether user has the permission
   cached_at       DateTime @default(now()) @db.Timestamptz(6) /// When permission was cached
   expires_at      DateTime @default(dbgenerated("(NOW() + '00:15:00'::interval)")) @db.Timestamptz(6) /// Cache expiration time
 
   @@id([user_id, permission_name])
-  @@map("user_permission_cache")
-  @@schema("cache")
   @@index([expires_at], name: "idx_user_permission_cache_expiry")
   @@index([user_id], name: "idx_user_permission_cache_user_id")
+  @@map("user_permission_cache")
+  @@schema("cache")
 }
-
 
 // === AGENT-TEMPLATES ===
 // From: prisma/schemas/swarm-agent/agent-templates.prisma
@@ -46,9 +45,9 @@ model UserPermissionCache {
 model AgentTemplate {
   template_id String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   category_id String?  @db.Uuid /// Template category
-  name        String   /// Template name
-  description String?  /// Template description
-  settings    Json?    /// Template configuration
+  name        String /// Template name
+  description String? /// Template description
+  settings    Json? /// Template configuration
   is_system   Boolean? @default(false) /// System-provided template
   is_public   Boolean? @default(false) /// Public visibility
   user_id     String?  @db.Uuid /// Template creator
@@ -62,8 +61,6 @@ model AgentTemplate {
   agents   Agent[]
   prompts  AgentPrompt[]
 
-  @@map("templates")
-  @@schema("swarm-agent")
   @@index([user_id], name: "idx_agent_templates_user_id")
   @@index([company_id], name: "idx_agent_templates_company_id")
   @@index([category_id], name: "idx_agent_templates_category_id")
@@ -71,8 +68,9 @@ model AgentTemplate {
   @@index([is_system], name: "idx_agent_templates_is_system")
   @@index([name], name: "idx_agent_templates_name")
   @@index([created_at], name: "idx_agent_templates_created_at")
+  @@map("templates")
+  @@schema("swarm-agent")
 }
-
 
 // === AGENT-PROMPTS ===
 // From: prisma/schemas/swarm-agent/agent-prompts.prisma
@@ -86,13 +84,13 @@ model AgentPrompt {
   category_id String?  @db.Uuid /// Prompt category
   template_id String?  @db.Uuid /// Associated template
   agent_id    String?  @db.Uuid /// Associated agent
-  name        String   /// Prompt name
-  content     String   /// Prompt content/text
-  prompt_type String   /// Type of prompt (system, user, etc.)
+  name        String /// Prompt name
+  content     String /// Prompt content/text
+  prompt_type String /// Type of prompt (system, user, etc.)
   is_system   Boolean? @default(false) /// System-provided prompt
   is_public   Boolean? @default(false) /// Public visibility
   is_visible  Boolean? @default(true) /// UI visibility
-  position    Int?     /// Display order
+  position    Int? /// Display order
   user_id     String?  @db.Uuid /// Prompt creator
   company_id  String?  @db.Uuid /// Associated company
   created_at  DateTime @default(now()) @db.Timestamptz(6)
@@ -104,8 +102,6 @@ model AgentPrompt {
   agent    Agent?         @relation(fields: [agent_id], references: [agent_id], onDelete: Cascade)
   company  Company?       @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
 
-  @@map("prompts")
-  @@schema("swarm-agent")
   @@index([user_id], name: "idx_agent_prompts_user_id")
   @@index([agent_id], name: "idx_agent_prompts_agent_id")
   @@index([template_id], name: "idx_agent_prompts_template_id")
@@ -114,8 +110,9 @@ model AgentPrompt {
   @@index([prompt_type], name: "idx_agent_prompts_type")
   @@index([is_public], name: "idx_agent_prompts_is_public")
   @@index([position], name: "idx_agent_prompts_position")
+  @@map("prompts")
+  @@schema("swarm-agent")
 }
-
 
 // === AGENT-LOGS ===
 // From: prisma/schemas/swarm-agent/agent-logs.prisma
@@ -129,26 +126,25 @@ model AgentLog {
   agent_id        String?  @db.Uuid /// Agent that was used
   user_id         String?  @db.Uuid /// User who used the agent
   company_id      String?  @db.Uuid /// Company context
-  input_token     Int?     /// Input tokens consumed
-  output_token    Int?     /// Output tokens consumed
-  embedding_token Int?     /// Embedding tokens consumed
+  input_token     Int? /// Input tokens consumed
+  output_token    Int? /// Output tokens consumed
+  embedding_token Int? /// Embedding tokens consumed
   pricing         Decimal? @db.Decimal /// Cost calculation
-  chat_history    Json?    /// Conversation context
+  chat_history    Json? /// Conversation context
   created_at      DateTime @default(now()) @db.Timestamptz(6)
 
   // Relations
   agent   Agent?   @relation(fields: [agent_id], references: [agent_id], onDelete: Cascade)
   company Company? @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
 
-  @@map("logs")
-  @@schema("swarm-agent")
   @@index([agent_id], name: "idx_agent_logs_agent_id")
   @@index([user_id], name: "idx_agent_logs_user_id")
   @@index([company_id], name: "idx_agent_logs_company_id")
   @@index([created_at], name: "idx_agent_logs_created_at")
   @@index([agent_id, created_at], name: "idx_agent_logs_agent_timestamp")
+  @@map("logs")
+  @@schema("swarm-agent")
 }
-
 
 // === AGENT-CATEGORIES ===
 // From: prisma/schemas/swarm-agent/agent-categories.prisma
@@ -174,7 +170,6 @@ model AgentCategory {
   @@schema("swarm-agent")
 }
 
-
 // === AGENT-BUCKET-ACCESSES ===
 // From: prisma/schemas/swarm-agent/agent-bucket-accesses.prisma
 
@@ -185,7 +180,7 @@ model AgentCategory {
 model AgentBucketAccess {
   agent_id         String   @db.Uuid
   bucket_id        String
-  permission_level String   
+  permission_level String
   granted_at       DateTime @default(now()) @db.Timestamptz(6)
 
   // Relations
@@ -196,7 +191,6 @@ model AgentBucketAccess {
   @@map("agent_bucket_accesses")
   @@schema("swarm-agent")
 }
-
 
 // === AGENT-RELATIONSHIPS ===
 // From: prisma/schemas/swarm-agent/agent-relationships.prisma
@@ -233,7 +227,6 @@ model AgentTool {
   @@schema("swarm-agent")
 }
 
-
 // === AGENTS ===
 // From: prisma/schemas/swarm-agent/agents.prisma
 
@@ -245,23 +238,23 @@ model Agent {
   agent_id      String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   user_id       String?   @db.Uuid /// Owner user ID
   company_id    String?   @db.Uuid /// Associated company for multi-tenancy
-  agent_name    String    /// Agent display name
-  description   String?   /// Agent description and purpose
-  route_path    String?   /// API route path for agent access
-  agent_style   String?   /// Agent personality/style configuration
-  on_status     Boolean?  /// Agent active/inactive status
+  agent_name    String /// Agent display name
+  description   String? /// Agent description and purpose
+  route_path    String? /// API route path for agent access
+  agent_style   String? /// Agent personality/style configuration
+  on_status     Boolean? /// Agent active/inactive status
   created_at    DateTime? @default(now()) @db.Timestamptz(6) /// Creation timestamp
-  public_hash   String?   /// Public access hash for sharing
-  is_public     Boolean?  /// Public visibility flag
-  avatar_url    String?   /// Agent avatar image URL
+  public_hash   String? /// Public access hash for sharing
+  is_public     Boolean? /// Public visibility flag
+  avatar_url    String? /// Agent avatar image URL
   category_id   String?   @db.Uuid /// Agent category classification
   template_id   String?   @db.Uuid /// Base template used
   workflow_id   String?   @db.Uuid /// Associated workflow
   use_memory    Boolean?  @default(false) /// Memory/context retention enabled
-  media_input   Json?     /// Supported input media types
-  media_output  Json?     /// Supported output media types
+  media_input   Json? /// Supported input media types
+  media_output  Json? /// Supported output media types
   use_tool      Boolean?  @default(false) /// Tool usage enabled
-  model_default String?   /// Default AI model to use
+  model_default String? /// Default AI model to use
 
   // Relations
   company  Company?       @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
@@ -278,8 +271,6 @@ model Agent {
   team_members           TeamMember[]
   agent_bucket_accesses  AgentBucketAccess[]
 
-  @@map("agents")
-  @@schema("swarm-agent")
   @@index([user_id], name: "idx_agents_user_id")
   @@index([company_id], name: "idx_agents_company_id")
   @@index([is_public], name: "idx_agents_is_public")
@@ -288,8 +279,9 @@ model Agent {
   @@index([company_id, is_public], name: "idx_agents_company_public")
   @@index([agent_name], name: "idx_agents_name")
   @@index([on_status], name: "idx_agents_status")
+  @@map("agents")
+  @@schema("swarm-agent")
 }
-
 
 // === RATE-LIMIT-LOGS ===
 // From: prisma/schemas/swarm-audit/rate-limit-logs.prisma
@@ -300,38 +292,37 @@ model Agent {
 /// Rate limiting tracking for API calls
 model RateLimitLog {
   user_id        String   @db.Uuid /// User making the call
-  function_name  String   /// Function being called
+  function_name  String /// Function being called
   call_timestamp DateTime @default(now()) @db.Timestamptz(6) /// When the call was made
-  client_info    Json?    /// Client information
+  client_info    Json? /// Client information
 
   @@id([user_id, function_name, call_timestamp])
+  @@index([user_id, function_name, call_timestamp], name: "idx_rate_limit_log_user_function_time")
   @@map("rate_limit_log")
   @@schema("swarm-audit")
-  @@index([user_id, function_name, call_timestamp], name: "idx_rate_limit_log_user_function_time")
 }
 
 /// Error tracking and monitoring for system reliability
 model ErrorLog {
   error_id      BigInt    @id @default(autoincrement())
   user_id       String?   @db.Uuid /// User associated with the error
-  function_name String    /// Function where error occurred
-  error_code    String    /// Error code or type
-  error_message String    /// Error message description
-  error_context Json?     /// Additional error context
-  stack_trace   String?   /// Full stack trace for debugging
+  function_name String /// Function where error occurred
+  error_code    String /// Error code or type
+  error_message String /// Error message description
+  error_context Json? /// Additional error context
+  stack_trace   String? /// Full stack trace for debugging
   occurred_at   DateTime  @default(now()) @db.Timestamptz(6) /// When error occurred
   resolved_at   DateTime? @db.Timestamptz(6) /// When error was resolved
   severity      String?   @default("ERROR") /// Error severity level
 
-  @@map("error_log")
-  @@schema("swarm-audit")
   @@index([function_name, occurred_at], name: "idx_error_log_function_time")
   @@index([severity, occurred_at], name: "idx_error_log_severity_time")
   @@index([user_id], name: "idx_error_log_user_id")
   @@index([error_code], name: "idx_error_log_error_code")
   @@index([occurred_at], name: "idx_error_log_occurred_at")
+  @@map("error_log")
+  @@schema("swarm-audit")
 }
-
 
 // === AUDIT-LOGS ===
 // From: prisma/schemas/swarm-audit/audit-logs.prisma
@@ -360,23 +351,22 @@ model AuditLog {
 model AuditLogPartitioned {
   log_id              BigInt   @default(autoincrement())
   user_id             String?  @db.Uuid /// User performing the action
-  action_type         String   /// Type of action performed
-  table_name_affected String?  /// Table that was modified
-  row_id_affected     String?  /// Specific row that was affected
-  old_data_snapshot   Json?    /// Data before the change
-  new_data_snapshot   Json?    /// Data after the change
-  description         String?  /// Human-readable description
-  client_info         Json?    /// Client/browser information
+  action_type         String /// Type of action performed
+  table_name_affected String? /// Table that was modified
+  row_id_affected     String? /// Specific row that was affected
+  old_data_snapshot   Json? /// Data before the change
+  new_data_snapshot   Json? /// Data after the change
+  description         String? /// Human-readable description
+  client_info         Json? /// Client/browser information
   action_timestamp    DateTime @default(now()) @db.Timestamptz(6) /// When the action occurred
 
   @@id([log_id, action_timestamp])
-  @@map("audit_log_partitioned")
-  @@schema("swarm-audit")
   @@index([user_id, action_timestamp], name: "idx_audit_log_partitioned_user_timestamp")
   @@index([action_type, action_timestamp], name: "idx_audit_log_partitioned_action_type")
   @@index([table_name_affected, action_timestamp], name: "idx_audit_log_partitioned_table_name")
+  @@map("audit_log_partitioned")
+  @@schema("swarm-audit")
 }
-
 
 // === FUNCTION-ACCESS-LOGS ===
 // From: prisma/schemas/swarm-audit/function-access-logs.prisma
@@ -388,21 +378,20 @@ model AuditLogPartitioned {
 model FunctionAccessLog {
   log_id           BigInt   @id @default(autoincrement())
   user_id          String?  @db.Uuid /// User attempting access
-  function_name    String   /// Function being accessed
-  access_granted   Boolean  /// Whether access was granted
+  function_name    String /// Function being accessed
+  access_granted   Boolean /// Whether access was granted
   access_timestamp DateTime @default(now()) @db.Timestamptz(6) /// When access was attempted
-  user_role        String?  /// User's role at time of access
-  reason           String?  /// Reason for access denial (if applicable)
+  user_role        String? /// User's role at time of access
+  reason           String? /// Reason for access denial (if applicable)
 
-  @@map("function_access_log")
-  @@schema("swarm-audit")
   @@index([user_id], name: "idx_function_access_log_user_id")
   @@index([function_name], name: "idx_function_access_log_function_name")
   @@index([access_timestamp], name: "idx_function_access_log_timestamp")
   @@index([access_granted], name: "idx_function_access_log_granted")
   @@index([user_id, access_timestamp], name: "idx_function_access_log_user_timestamp")
+  @@map("function_access_log")
+  @@schema("swarm-audit")
 }
-
 
 // === BLOG-CATEGORIES ===
 // From: prisma/schemas/swarm-blog/blog-categories.prisma
@@ -413,10 +402,10 @@ model FunctionAccessLog {
 /// Blog content categorization system
 model BlogCategory {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name        String   /// Category display name
+  name        String /// Category display name
   slug        String   @unique /// URL-friendly identifier
-  description String?  /// Category description
-  color       String?  /// UI color theme
+  description String? /// Category description
+  color       String? /// UI color theme
   is_active   Boolean? @default(true) /// Active status
   sort_order  Int?     @default(0) /// Display order
   created_at  DateTime @default(now()) @db.Timestamptz(6)
@@ -425,13 +414,12 @@ model BlogCategory {
   // Relations
   blog_articles BlogArticle[]
 
-  @@map("blog_categories")
-  @@schema("swarm-blog")
   @@index([is_active], name: "idx_blog_categories_active")
   @@index([sort_order], name: "idx_blog_categories_sort_order")
   @@index([slug], name: "idx_blog_categories_slug")
+  @@map("blog_categories")
+  @@schema("swarm-blog")
 }
-
 
 // === BLOG-LANGUAGES-AND-TAGS ===
 // From: prisma/schemas/swarm-blog/blog-languages-and-tags.prisma
@@ -442,29 +430,29 @@ model BlogCategory {
 /// Supported languages for multi-language content
 model SupportedLanguage {
   code        String   @id /// ISO language code
-  name        String   /// English language name
-  native_name String   /// Native language name
+  name        String /// English language name
+  native_name String /// Native language name
   is_active   Boolean? @default(true) /// Language availability
   sort_order  Int?     @default(0) /// Display order
   created_at  DateTime @default(now()) @db.Timestamptz(6)
 
   // Relations
   article_translations BlogArticleTranslation[]
-  audio_files         BlogAudioFile[]
+  audio_files          BlogAudioFile[]
 
-  @@map("supported_languages")
-  @@schema("swarm-blog")
   @@index([is_active], name: "idx_supported_languages_active")
   @@index([sort_order], name: "idx_supported_languages_sort_order")
+  @@map("supported_languages")
+  @@schema("swarm-blog")
 }
 
 /// Blog tagging system
 model BlogTag {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name        String   /// Tag display name
+  name        String /// Tag display name
   slug        String   @unique /// URL-friendly identifier
-  description String?  /// Tag description
-  color       String?  /// UI color theme
+  description String? /// Tag description
+  color       String? /// UI color theme
   usage_count Int?     @default(0) /// Usage frequency counter
   is_active   Boolean? @default(true) /// Active status
   created_at  DateTime @default(now()) @db.Timestamptz(6)
@@ -473,12 +461,12 @@ model BlogTag {
   // Relations
   article_tags BlogArticleTag[]
 
-  @@map("blog_tags")
-  @@schema("swarm-blog")
   @@index([is_active], name: "idx_blog_tags_active")
   @@index([usage_count], name: "idx_blog_tags_usage_count")
   @@index([slug], name: "idx_blog_tags_slug")
   @@index([name], name: "idx_blog_tags_name")
+  @@map("blog_tags")
+  @@schema("swarm-blog")
 }
 
 /// Junction table for flexible tagging system between articles and tags
@@ -492,12 +480,11 @@ model BlogArticleTag {
   tag     BlogTag     @relation(fields: [tag_id], references: [id], onDelete: Cascade)
 
   @@id([article_id, tag_id])
-  @@map("blog_article_tags")
-  @@schema("swarm-blog")
   @@index([tag_id], name: "idx_blog_article_tags_tag")
   @@index([created_at], name: "idx_blog_article_tags_created")
+  @@map("blog_article_tags")
+  @@schema("swarm-blog")
 }
-
 
 // === BLOG-ARTICLES ===
 // From: prisma/schemas/swarm-blog/blog-articles.prisma
@@ -508,13 +495,13 @@ model BlogArticleTag {
 /// Blog articles with SEO and multi-language support
 model BlogArticle {
   id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title              String    /// Article title
+  title              String /// Article title
   slug               String    @unique /// URL-friendly identifier
-  content            String    /// Article content (markdown)
-  excerpt            String?   /// Article summary
-  featured_image_url String?   /// Featured image URL
-  meta_description   String?   /// SEO meta description
-  meta_keywords      String[]  /// SEO keywords
+  content            String /// Article content (markdown)
+  excerpt            String? /// Article summary
+  featured_image_url String? /// Featured image URL
+  meta_description   String? /// SEO meta description
+  meta_keywords      String[] /// SEO keywords
   status             String    @default("draft") /// Publication status
   publish_date       DateTime? @db.Timestamptz(6) /// Publication date
   author_user_id     String    @db.Uuid /// Article author
@@ -532,8 +519,6 @@ model BlogArticle {
   audio_files  BlogAudioFile[]
   article_tags BlogArticleTag[]
 
-  @@map("blog_articles")
-  @@schema("swarm-blog")
   @@index([status], name: "idx_blog_articles_status")
   @@index([publish_date], name: "idx_blog_articles_publish_date")
   @@index([author_user_id], name: "idx_blog_articles_author")
@@ -542,8 +527,9 @@ model BlogArticle {
   @@index([is_featured], name: "idx_blog_articles_featured")
   @@index([view_count], name: "idx_blog_articles_view_count")
   @@index([created_at], name: "idx_blog_articles_created_at")
+  @@map("blog_articles")
+  @@schema("swarm-blog")
 }
-
 
 // === BLOG-TRANSLATIONS-AND-AUDIO ===
 // From: prisma/schemas/swarm-blog/blog-translations-and-audio.prisma
@@ -555,15 +541,15 @@ model BlogArticle {
 model BlogArticleTranslation {
   id                        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   article_id                String   @db.Uuid /// Reference to the original blog article
-  language_code             String   /// Target language for this translation
-  title                     String   /// Translated title
-  content                   String   /// Translated content
-  excerpt                   String?  /// Translated excerpt
-  meta_description          String?  /// Translated SEO meta description
+  language_code             String /// Target language for this translation
+  title                     String /// Translated title
+  content                   String /// Translated content
+  excerpt                   String? /// Translated excerpt
+  meta_description          String? /// Translated SEO meta description
   meta_keywords             String[] /// Translated SEO keywords
-  slug                      String   /// URL-friendly identifier for translated article
+  slug                      String /// URL-friendly identifier for translated article
   translation_status        String   @default("draft") /// Current status of the translation
-  translation_quality_score Int?     /// Quality score from 0-100
+  translation_quality_score Int? /// Quality score from 0-100
   translator_user_id        String?  @db.Uuid /// User who created/managed this translation
   created_at                DateTime @default(now()) @db.Timestamptz(6)
   updated_at                DateTime @default(now()) @updatedAt @db.Timestamptz(6)
@@ -574,24 +560,24 @@ model BlogArticleTranslation {
 
   @@unique([article_id, language_code])
   @@unique([language_code, slug])
-  @@map("blog_article_translations")
-  @@schema("swarm-blog")
   @@index([translation_status], name: "idx_blog_article_translations_status")
   @@index([language_code], name: "idx_blog_article_translations_language")
   @@index([translator_user_id], name: "idx_blog_article_translations_translator")
+  @@map("blog_article_translations")
+  @@schema("swarm-blog")
 }
 
 /// Blog audio files for audio content integration
 model BlogAudioFile {
   id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   article_id       String   @db.Uuid /// Reference to the blog article
-  language_code    String?  /// Language of the audio content
-  file_url         String   /// URL to the audio file in storage
-  file_size_bytes  BigInt?  /// File size in bytes
-  duration_seconds Int?     /// Duration of audio in seconds
-  audio_format     String?  /// Audio format (mp3, wav, ogg, etc.)
-  transcript       String?  /// Text transcript of the audio content
-  narrator_name    String?  /// Name of the narrator
+  language_code    String? /// Language of the audio content
+  file_url         String /// URL to the audio file in storage
+  file_size_bytes  BigInt? /// File size in bytes
+  duration_seconds Int? /// Duration of audio in seconds
+  audio_format     String? /// Audio format (mp3, wav, ogg, etc.)
+  transcript       String? /// Text transcript of the audio content
+  narrator_name    String? /// Name of the narrator
   audio_quality    String   @default("standard") /// Audio quality level
   created_at       DateTime @default(now()) @db.Timestamptz(6)
   updated_at       DateTime @default(now()) @updatedAt @db.Timestamptz(6)
@@ -600,13 +586,12 @@ model BlogAudioFile {
   article  BlogArticle        @relation(fields: [article_id], references: [id], onDelete: Cascade)
   language SupportedLanguage? @relation(fields: [language_code], references: [code])
 
-  @@map("blog_audio_files")
-  @@schema("swarm-blog")
   @@index([article_id], name: "idx_blog_audio_files_article")
   @@index([language_code], name: "idx_blog_audio_files_language")
   @@index([audio_quality], name: "idx_blog_audio_files_quality")
+  @@map("blog_audio_files")
+  @@schema("swarm-blog")
 }
-
 
 // === USER-COMPANIES ===
 // From: prisma/schemas/swarm-company/user-companies.prisma
@@ -625,14 +610,13 @@ model UserCompany {
   role    Role?   @relation(fields: [role_id], references: [role_id])
 
   @@id([user_id, company_id])
-  @@map("user_companies")
-  @@schema("swarm-company")
   @@index([user_id], name: "idx_user_companies_user_id")
   @@index([company_id], name: "idx_user_companies_company_id")
   @@index([role_id], name: "idx_user_companies_role_id")
   @@index([user_id, company_id], name: "idx_user_companies_composite")
+  @@map("user_companies")
+  @@schema("swarm-company")
 }
-
 
 // === COMPANIES ===
 // From: prisma/schemas/swarm-company/companies.prisma
@@ -644,57 +628,56 @@ model UserCompany {
 model Company {
   company_id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name                String    @unique /// Company display name (must be unique)
-  statutory_name      String?   /// Legal company name
-  description         String?   /// Company description
-  address             String?   /// Physical address
-  city                String?   /// City location
-  state_province      String?   /// State or province
-  postal_code         String?   /// ZIP/postal code
-  country             String?   /// Country code or name
-  phone               String?   /// Contact phone number
-  email               String?   /// Contact email address
-  website             String?   /// Company website URL
-  website_url         String?   /// Alternative website URL
-  social_accounts     Json?     /// Social media account links
-  chamber_of_commerce String?   /// Chamber of commerce registration
-  duns_number         String?   /// DUNS business identifier
-  tax_id              String?   /// Tax identification number
-  industry            String?   /// Industry classification
+  statutory_name      String? /// Legal company name
+  description         String? /// Company description
+  address             String? /// Physical address
+  city                String? /// City location
+  state_province      String? /// State or province
+  postal_code         String? /// ZIP/postal code
+  country             String? /// Country code or name
+  phone               String? /// Contact phone number
+  email               String? /// Contact email address
+  website             String? /// Company website URL
+  website_url         String? /// Alternative website URL
+  social_accounts     Json? /// Social media account links
+  chamber_of_commerce String? /// Chamber of commerce registration
+  duns_number         String? /// DUNS business identifier
+  tax_id              String? /// Tax identification number
+  industry            String? /// Industry classification
   founded_date        DateTime? @db.Date /// Company founding date
-  company_size        String?   /// Employee count category
-  logo_url            String?   /// Company logo URL
+  company_size        String? /// Employee count category
+  logo_url            String? /// Company logo URL
   created_at          DateTime  @default(now()) @db.Timestamptz(6) /// Record creation timestamp
   updated_at          DateTime  @default(now()) @db.Timestamptz(6) /// Last update timestamp
 
   // Relations
-  agents          Agent[]
-  agent_logs      AgentLog[]
-  agent_templates AgentTemplate[]
-  agent_prompts   AgentPrompt[]
-  user_companies  UserCompany[]
-  buckets         Bucket[]
-  components      Component[]
-  component_shares ComponentShareCompanyRole[]
-  teams           Team[]
-  organizations   Organization[]
-  cron_jobs       CronJob[]
-  outgoing_webhooks OutgoingWebhook[]
-  workflows       Workflow[]
-  webhooks        Webhook[]
-  file_metadata   FileMetadata[]
-  file_shares_company_roles FileShareCompanyRole[]
-  tools           Tool[]
+  agents                           Agent[]
+  agent_logs                       AgentLog[]
+  agent_templates                  AgentTemplate[]
+  agent_prompts                    AgentPrompt[]
+  user_companies                   UserCompany[]
+  buckets                          Bucket[]
+  components                       Component[]
+  component_shares                 ComponentShareCompanyRole[]
+  teams                            Team[]
+  organizations                    Organization[]
+  cron_jobs                        CronJob[]
+  outgoing_webhooks                OutgoingWebhook[]
+  workflows                        Workflow[]
+  webhooks                         Webhook[]
+  file_metadata                    FileMetadata[]
+  file_shares_company_roles        FileShareCompanyRole[]
+  tools                            Tool[]
   tool_secret_shares_company_roles ToolSecretShareCompanyRole[]
-  postgresql_user_roles PostgresqlUserRole[]
+  postgresql_user_roles            PostgresqlUserRole[]
 
-  @@map("companies")
-  @@schema("swarm-company")
   @@index([name], name: "idx_companies_name")
   @@index([created_at], name: "idx_companies_created_at")
   @@index([industry], name: "idx_companies_industry")
   @@index([country], name: "idx_companies_country")
+  @@map("companies")
+  @@schema("swarm-company")
 }
-
 
 // === COMPONENT-RELATIONSHIPS ===
 // From: prisma/schemas/swarm-component/component-relationships.prisma
@@ -777,7 +760,6 @@ model ComponentVersion {
   @@schema("swarm-component")
 }
 
-
 // === COMPONENT-TYPES ===
 // From: prisma/schemas/swarm-component/component-types.prisma
 
@@ -793,12 +775,11 @@ model ComponentType {
   updated_at  DateTime @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz(6)
 
   // Relations
-  components  Component[]
+  components Component[]
 
   @@map("component_types")
   @@schema("swarm-component")
 }
-
 
 // === COMPONENTS ===
 // From: prisma/schemas/swarm-component/components.prisma
@@ -826,18 +807,17 @@ model Component {
   updated_at          DateTime @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz(6)
 
   // Relations
-  source             ComponentSource? @relation(fields: [source_id], references: [source_id], onDelete: Cascade)
-  type               ComponentType?   @relation(fields: [type_id], references: [type_id], onDelete: Cascade)
-  company            Company?         @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
-  agent_associations ComponentAgentAssociation[]
-  shares_users       ComponentShareUser[]
+  source               ComponentSource?            @relation(fields: [source_id], references: [source_id], onDelete: Cascade)
+  type                 ComponentType?              @relation(fields: [type_id], references: [type_id], onDelete: Cascade)
+  company              Company?                    @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
+  agent_associations   ComponentAgentAssociation[]
+  shares_users         ComponentShareUser[]
   shares_company_roles ComponentShareCompanyRole[]
-  versions           ComponentVersion[]
+  versions             ComponentVersion[]
 
   @@map("components")
   @@schema("swarm-component")
 }
-
 
 // === COMPONENT-SOURCES ===
 // From: prisma/schemas/swarm-component/component-sources.prisma
@@ -854,12 +834,11 @@ model ComponentSource {
   updated_at  DateTime @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz(6)
 
   // Relations
-  components  Component[]
+  components Component[]
 
   @@map("component_sources")
   @@schema("swarm-component")
 }
-
 
 // === CRON-JOBS ===
 // From: prisma/schemas/swarm-cronjob/cron-jobs.prisma
@@ -889,7 +868,6 @@ model CronJob {
   @@schema("swarm-cronjob")
 }
 
-
 // === FILE-METADATA ===
 // From: prisma/schemas/swarm-file-storage/file-metadata.prisma
 
@@ -898,39 +876,38 @@ model CronJob {
 
 /// File metadata and storage information
 model FileMetadata {
-  file_id       String   @id @db.Uuid
-  bucket_id     String   /// Storage bucket identifier
-  object_path   String   /// File path within bucket
-  owner_user_id String   @db.Uuid /// File owner
-  company_id    String?  @db.Uuid /// Associated company
-  file_name     String?  /// Original filename
-  content_type  String?  /// MIME content type
-  size_bytes    BigInt?  /// File size in bytes
-  is_public     Boolean? @default(false) /// Public access flag
-  need_embedding  Boolean  /// Embedding file (RAG, need file processing service) or Normal file
-  created_at    DateTime @default(now()) @db.Timestamptz(6)
-  updated_at    DateTime? @default(now()) @db.Timestamptz(6)
-  metadata      Json?    /// Additional file metadata
+  file_id        String    @id @db.Uuid
+  bucket_id      String /// Storage bucket identifier
+  object_path    String /// File path within bucket
+  owner_user_id  String    @db.Uuid /// File owner
+  company_id     String?   @db.Uuid /// Associated company
+  file_name      String? /// Original filename
+  content_type   String? /// MIME content type
+  size_bytes     BigInt? /// File size in bytes
+  is_public      Boolean?  @default(false) /// Public access flag
+  need_embedding Boolean /// Embedding file (RAG, need file processing service) or Normal file
+  created_at     DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime? @default(now()) @db.Timestamptz(6)
+  metadata       Json? /// Additional file metadata
 
   // Relations
-  bucket                    Bucket?                    @relation(fields: [bucket_id], references: [bucket_id], onDelete: Cascade)
-  owner                     UserProfile                @relation(fields: [owner_user_id], references: [user_id])
-  company                   Company?                   @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
+  bucket                    Bucket?                @relation(fields: [bucket_id], references: [bucket_id], onDelete: Cascade)
+  owner                     UserProfile            @relation(fields: [owner_user_id], references: [user_id])
+  company                   Company?               @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
   file_shares_users         FileShareUser[]
   file_shares_company_roles FileShareCompanyRole[]
   file_embeddings           FileEmbedding[]
 
   @@unique([bucket_id, object_path])
-  @@map("file_metadata")
-  @@schema("swarm-file-storage")
   @@index([owner_user_id], name: "idx_file_metadata_user_id")
   @@index([bucket_id], name: "idx_file_metadata_bucket_id")
   @@index([company_id], name: "idx_file_metadata_company_id")
   @@index([created_at], name: "idx_file_metadata_created_at")
   @@index([content_type], name: "idx_file_metadata_content_type")
   @@index([is_public], name: "idx_file_metadata_is_public")
+  @@map("file_metadata")
+  @@schema("swarm-file-storage")
 }
-
 
 // === BUCKETS ===
 // From: prisma/schemas/swarm-file-storage/buckets.prisma
@@ -949,15 +926,14 @@ model Bucket {
   metadata              Json?
 
   // Relations
-  owner               UserProfile   @relation(fields: [owner_user_id], references: [user_id])
-  associated_company  Company?      @relation(fields: [associated_company_id], references: [company_id], onDelete: Cascade)
-  agent_bucket_accesses   AgentBucketAccess[]
-  file_metadata           FileMetadata[]
+  owner                 UserProfile         @relation(fields: [owner_user_id], references: [user_id])
+  associated_company    Company?            @relation(fields: [associated_company_id], references: [company_id], onDelete: Cascade)
+  agent_bucket_accesses AgentBucketAccess[]
+  file_metadata         FileMetadata[]
 
   @@map("buckets")
   @@schema("swarm-file-storage")
 }
-
 
 // === FILE-SHARING ===
 // From: prisma/schemas/swarm-file-storage/file-sharing.prisma
@@ -999,7 +975,6 @@ model FileShareCompanyRole {
   @@schema("swarm-file-storage")
 }
 
-
 // === FILE-EMBEDDINGS ===
 // From: prisma/schemas/swarm-file-storage/file-embeddings.prisma
 
@@ -1011,20 +986,19 @@ model FileEmbedding {
   id          String                       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   file_id     String                       @default(dbgenerated("uuid_generate_v4()")) @db.Uuid /// Source file
   chunk_index Int                          @db.SmallInt /// Chunk sequence number
-  content     String                       /// Text content of the chunk
+  content     String /// Text content of the chunk
   embedding   Unsupported("vector(1536)")? /// Vector embedding for semantic search
   created_at  DateTime                     @default(now()) @db.Timestamptz(6)
-  metadata    Json?                        /// Additional chunk metadata
+  metadata    Json? /// Additional chunk metadata
 
   // Relations
   file_metadata FileMetadata? @relation(fields: [file_id], references: [file_id], onDelete: Cascade)
 
-  @@map("file_embeddings")
-  @@schema("swarm-file-storage")
   @@index([file_id], name: "idx_file_embeddings_file_id")
   @@index([created_at], name: "idx_file_embeddings_created_at")
+  @@map("file_embeddings")
+  @@schema("swarm-file-storage")
 }
-
 
 // === TERMS-AND-CONDITIONS ===
 // From: prisma/schemas/swarm-legal/terms-and-conditions.prisma
@@ -1048,7 +1022,6 @@ model TermsAndCondition {
   @@map("terms_and_conditions")
   @@schema("swarm-legal")
 }
-
 
 // === PRIVACY-POLICIES ===
 // From: prisma/schemas/swarm-legal/privacy-policies.prisma
@@ -1081,12 +1054,11 @@ model PolicyVersion {
   created_by  String   @db.Uuid
   created_at  DateTime @default(now()) @db.Timestamptz(6)
   is_active   Boolean  @default(false)
-  policies    Json     // Backup of policies for this version
+  policies    Json // Backup of policies for this version
 
   @@map("policy_versions")
   @@schema("swarm-legal")
 }
-
 
 // === LLMSTXT-REGISTRY ===
 // From: prisma/schemas/swarm-llmstxt/llmstxt-registry.prisma
@@ -1099,13 +1071,13 @@ model LlmstxtRegistry {
   llmstxt_id   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   user_id      String?  @db.Uuid /// Registry owner
   company_id   String?  @db.Uuid /// Associated company
-  name         String   /// Document name
-  description  String?  /// Document description
-  source_url   String?  /// Original source URL
+  name         String /// Document name
+  description  String? /// Document description
+  source_url   String? /// Original source URL
   type         String   @default("basic") /// Document type
-  relative_url String   /// Relative path to document
-  file_size    BigInt?  /// Document size in bytes
-  file_hash    String?  /// Content hash for integrity
+  relative_url String /// Relative path to document
+  file_size    BigInt? /// Document size in bytes
+  file_hash    String? /// Content hash for integrity
   metadata     Json?    @default("{}") /// Additional metadata
   tags         String[] @default([]) /// Document tags
   version      String?  @default("1.0") /// Document version
@@ -1117,8 +1089,6 @@ model LlmstxtRegistry {
   // Relations
   agent_llmstxt AgentLlmstxt[]
 
-  @@map("llmstxt_registry")
-  @@schema("swarm-llmstxt")
   @@index([user_id], name: "idx_llmstxt_registry_user_id")
   @@index([company_id], name: "idx_llmstxt_registry_company_id")
   @@index([is_public], name: "idx_llmstxt_registry_is_public")
@@ -1126,6 +1096,8 @@ model LlmstxtRegistry {
   @@index([type], name: "idx_llmstxt_registry_type")
   @@index([name], name: "idx_llmstxt_registry_name")
   @@index([tags], name: "idx_llmstxt_registry_tags")
+  @@map("llmstxt_registry")
+  @@schema("swarm-llmstxt")
 }
 
 /// Agent-LLMsTxt associations
@@ -1147,7 +1119,6 @@ model AgentLlmstxt {
   @@map("llmstxt")
   @@schema("swarm-llmstxt")
 }
-
 
 // === ORGANIZATIONS ===
 // From: prisma/schemas/swarm-organization/organizations.prisma
@@ -1176,7 +1147,6 @@ model Organization {
   @@schema("swarm-organization")
 }
 
-
 // === POSTGRESQL-USER-ROLES ===
 // From: prisma/schemas/swarm-rbac/postgresql-user-roles.prisma
 
@@ -1185,26 +1155,25 @@ model Organization {
 
 /// PostgreSQL role assignments for users
 model PostgresqlUserRole {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id         String    @db.Uuid /// User who has the role assigned
-  postgresql_role String    /// PostgreSQL role name (swarm_user, swarm_admin, etc.)
-  company_id      String?   @db.Uuid /// Company context for the role assignment
-  assigned_at     DateTime  @default(now()) @db.Timestamptz(6) /// When the role was assigned
-  assigned_by     String?   @db.Uuid /// User who assigned this role
-  is_active       Boolean   @default(true) /// Whether the role assignment is currently active
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id         String   @db.Uuid /// User who has the role assigned
+  postgresql_role String /// PostgreSQL role name (swarm_user, swarm_admin, etc.)
+  company_id      String?  @db.Uuid /// Company context for the role assignment
+  assigned_at     DateTime @default(now()) @db.Timestamptz(6) /// When the role was assigned
+  assigned_by     String?  @db.Uuid /// User who assigned this role
+  is_active       Boolean  @default(true) /// Whether the role assignment is currently active
 
   // Relations
   company Company? @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
 
   @@unique([user_id, postgresql_role, company_id])
-  @@map("postgresql_user_roles")
-  @@schema("swarm-rbac")
   @@index([user_id], name: "idx_postgresql_user_roles_user_id")
   @@index([postgresql_role], name: "idx_postgresql_user_roles_role")
   @@index([company_id], name: "idx_postgresql_user_roles_company")
   @@index([is_active], name: "idx_postgresql_user_roles_active")
+  @@map("postgresql_user_roles")
+  @@schema("swarm-rbac")
 }
-
 
 // === ROLES ===
 // From: prisma/schemas/swarm-rbac/roles.prisma
@@ -1218,17 +1187,16 @@ model Role {
   role_name String @unique
 
   // Relations
-  component_shares ComponentShareCompanyRole[]
-  user_companies  UserCompany[]
-  role_function_permissions RoleFunctionPermission[]
-  file_shares_company_roles FileShareCompanyRole[]
+  component_shares                 ComponentShareCompanyRole[]
+  user_companies                   UserCompany[]
+  role_function_permissions        RoleFunctionPermission[]
+  file_shares_company_roles        FileShareCompanyRole[]
   tool_secret_shares_company_roles ToolSecretShareCompanyRole[]
 
+  @@index([role_name], name: "idx_roles_name")
   @@map("roles")
   @@schema("swarm-rbac")
-  @@index([role_name], name: "idx_roles_name")
 }
-
 
 // === CASBIN-POLICIES ===
 // From: prisma/schemas/swarm-rbac/casbin-policies.prisma
@@ -1238,7 +1206,7 @@ model Role {
 
 /// Casbin Policy Tables
 model CasbinPolicy {
-  id    Int    @id @default(autoincrement())
+  id    Int     @id @default(autoincrement())
   ptype String
   v0    String?
   v1    String?
@@ -1251,7 +1219,6 @@ model CasbinPolicy {
   @@schema("swarm-rbac")
 }
 
-
 // === FUNCTION-PERMISSIONS ===
 // From: prisma/schemas/swarm-rbac/function-permissions.prisma
 
@@ -1262,16 +1229,16 @@ model CasbinPolicy {
 model FunctionPermission {
   permission_id String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   function_name String   @unique /// Unique function identifier
-  description   String?  /// Permission description and purpose
+  description   String? /// Permission description and purpose
   created_at    DateTime @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz(6)
   updated_at    DateTime @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz(6)
 
   // Relations
   role_function_permissions RoleFunctionPermission[]
 
+  @@index([function_name], name: "idx_function_permissions_name")
   @@map("function_permissions")
   @@schema("swarm-rbac")
-  @@index([function_name], name: "idx_function_permissions_name")
 }
 
 /// Role-to-permission mapping for RBAC system
@@ -1287,13 +1254,12 @@ model RoleFunctionPermission {
   permission FunctionPermission? @relation(fields: [permission_id], references: [permission_id], onDelete: Cascade)
 
   @@unique([role_id, permission_id])
-  @@map("role_function_permissions")
-  @@schema("swarm-rbac")
   @@index([role_id], name: "idx_role_function_permissions_role")
   @@index([permission_id], name: "idx_role_function_permissions_permission")
   @@index([role_id, permission_id], name: "idx_role_function_permissions_composite")
+  @@map("role_function_permissions")
+  @@schema("swarm-rbac")
 }
-
 
 // === PRICING-TIERS ===
 // From: prisma/schemas/swarm-subscriptions/pricing-tiers.prisma
@@ -1318,15 +1284,14 @@ model PricingTier {
   created_at     DateTime  @default(now()) @db.Timestamptz(6)
 
   // Relations
-  pricing_profile  PricingProfile?     @relation(fields: [profile_id], references: [profile_id], onDelete: Cascade)
-  terms_condition  TermsAndCondition?  @relation(fields: [term_id], references: [term_id], onDelete: SetNull)
-  privacy_policy   PrivacyPolicy?      @relation(fields: [policy_id], references: [policy_id], onDelete: SetNull)
-  subscriptions    Subscription[]
+  pricing_profile PricingProfile?    @relation(fields: [profile_id], references: [profile_id], onDelete: Cascade)
+  terms_condition TermsAndCondition? @relation(fields: [term_id], references: [term_id], onDelete: SetNull)
+  privacy_policy  PrivacyPolicy?     @relation(fields: [policy_id], references: [policy_id], onDelete: SetNull)
+  subscriptions   Subscription[]
 
   @@map("pricing_tiers")
   @@schema("swarm-subscriptions")
 }
-
 
 // === DISCOUNT-COUPONS ===
 // From: prisma/schemas/swarm-subscriptions/discount-coupons.prisma
@@ -1358,7 +1323,6 @@ model DiscountCoupon {
   @@schema("swarm-subscriptions")
 }
 
-
 // === SUBSCRIPTIONS ===
 // From: prisma/schemas/swarm-subscriptions/subscriptions.prisma
 
@@ -1371,11 +1335,11 @@ model Subscription {
   user_id                           String    @db.Uuid /// Subscriber user
   tier_id                           String    @db.Uuid /// Pricing tier
   coupon_id                         String?   @db.Uuid /// Applied discount coupon
-  applied_discount_type             String?   /// Type of discount applied
+  applied_discount_type             String? /// Type of discount applied
   applied_discount_value            Decimal?  @db.Decimal /// Discount amount
-  granted_extra_tokens              Int?      /// Additional tokens granted
-  granted_extra_database_storage_mb Int?      /// Extra database storage (MB)
-  granted_extra_file_storage_mb     Int?      /// Extra file storage (MB)
+  granted_extra_tokens              Int? /// Additional tokens granted
+  granted_extra_database_storage_mb Int? /// Extra database storage (MB)
+  granted_extra_file_storage_mb     Int? /// Extra file storage (MB)
   start_date                        DateTime  @default(now()) @db.Timestamptz(6) /// Subscription start
   end_date                          DateTime? @db.Timestamptz(6) /// Subscription end
   status                            String    @default("active") /// Subscription status
@@ -1386,15 +1350,14 @@ model Subscription {
   pricing_tier    PricingTier?    @relation(fields: [tier_id], references: [tier_id])
   discount_coupon DiscountCoupon? @relation(fields: [coupon_id], references: [coupon_id])
 
-  @@map("subscriptions")
-  @@schema("swarm-subscriptions")
   @@index([user_id], name: "idx_subscriptions_user_id")
   @@index([tier_id], name: "idx_subscriptions_tier_id")
   @@index([status], name: "idx_subscriptions_status")
   @@index([end_date], name: "idx_subscriptions_end_date")
   @@index([coupon_id], name: "idx_subscriptions_coupon_id")
+  @@map("subscriptions")
+  @@schema("swarm-subscriptions")
 }
-
 
 // === PRICING-PROFILES ===
 // From: prisma/schemas/swarm-subscriptions/pricing-profiles.prisma
@@ -1421,7 +1384,6 @@ model PricingProfile {
   @@map("pricing_profiles")
   @@schema("swarm-subscriptions")
 }
-
 
 // === TEAMS ===
 // From: prisma/schemas/swarm-team/teams.prisma
@@ -1466,7 +1428,6 @@ model TeamMember {
   @@schema("swarm-team")
 }
 
-
 // === TOOLS ===
 // From: prisma/schemas/swarm-tool/tools.prisma
 
@@ -1476,44 +1437,43 @@ model TeamMember {
 /// External tool integration with multi-tenant support
 model Tool {
   tool_id              String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  name                 String   /// Tool display name
-  description          String?  /// Tool description
-  version              String?  /// Current version
-  cmd_install_         String?  /// Command to install the tool
-  port                 String?  /// Port number for the tool
-  method               String?  /// Connection method (e.g., sse, stdio)
-  env                  Json?    /// Environment variables configuration
-  required_env         Json?    /// Required environment variables
-  status               String?  /// Tool availability status
+  name                 String /// Tool display name
+  description          String? /// Tool description
+  version              String? /// Current version
+  cmd_install_         String? /// Command to install the tool
+  port                 String? /// Port number for the tool
+  method               String? /// Connection method (e.g., sse, stdio)
+  env                  Json? /// Environment variables configuration
+  required_env         Json? /// Required environment variables
+  status               String? /// Tool availability status
   user_id              String?  @db.Uuid /// Tool owner
   company_id           String?  @db.Uuid /// Associated company
-  logo_url             String?  /// Tool logo URL
-  slug                 String?  /// URL-friendly identifier
-  website              String?  /// Tool website
-  developer            String?  /// Tool developer/vendor
-  source               String?  /// Source code repository
-  license              String?  /// License type
-  detailed_description String?  /// Extended description
-  security_note        String?  /// Security considerations
-  usage_suggestions    Json?    /// Usage recommendations
-  functions            Json?    /// Available functions/capabilities
+  logo_url             String? /// Tool logo URL
+  slug                 String? /// URL-friendly identifier
+  website              String? /// Tool website
+  developer            String? /// Tool developer/vendor
+  source               String? /// Source code repository
+  license              String? /// License type
+  detailed_description String? /// Extended description
+  security_note        String? /// Security considerations
+  usage_suggestions    Json? /// Usage recommendations
+  functions            Json? /// Available functions/capabilities
   is_public            Boolean? @default(false) /// Public visibility
 
   // Relations
-  company     Company?     @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
-  agent_tools AgentTool[]
+  company      Company?     @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
+  agent_tools  AgentTool[]
   tool_secrets ToolSecret[]
 
-  @@map("tools")
-  @@schema("swarm-tool")
   @@index([user_id], name: "idx_tools_user_id")
   @@index([company_id], name: "idx_tools_company_id")
   @@index([is_public], name: "idx_tools_is_public")
   @@index([name], name: "idx_tools_name")
   @@index([slug], name: "idx_tools_slug")
   @@index([status], name: "idx_tools_status")
+  @@map("tools")
+  @@schema("swarm-tool")
 }
-
 
 // === TOOL-SECRETS ===
 // From: prisma/schemas/swarm-tool/tool-secrets.prisma
@@ -1533,7 +1493,7 @@ model ToolSecret {
   updated_at             DateTime @default(dbgenerated("timezone('utc'::text, now())")) @db.Timestamptz(6)
 
   // Relations
-  tool                             Tool                             @relation(fields: [tool_id], references: [tool_id])
+  tool                             Tool                         @relation(fields: [tool_id], references: [tool_id])
   tool_secret_shares_users         ToolSecretShareUser[]
   tool_secret_shares_company_roles ToolSecretShareCompanyRole[]
 
@@ -1572,7 +1532,6 @@ model ToolSecretShareCompanyRole {
   @@schema("swarm-tool")
 }
 
-
 // === USER-PROFILES ===
 // From: prisma/schemas/swarm-user/user-profiles.prisma
 
@@ -1582,11 +1541,11 @@ model ToolSecretShareCompanyRole {
 /// Extended user profile information and preferences
 model UserProfile {
   user_id                  String   @id @db.Uuid /// User identifier (links to auth.users)
-  full_name                String?  /// User's full name
-  address                  String?  /// Physical address
-  phone                    String?  /// Contact phone number
-  country                  String?  /// Country of residence
-  social_accounts          Json?    /// Social media account links
+  full_name                String? /// User's full name
+  address                  String? /// Physical address
+  phone                    String? /// Contact phone number
+  country                  String? /// Country of residence
+  social_accounts          Json? /// Social media account links
   subscribe_newsletter     Boolean? @default(false) /// Newsletter subscription preference
   is_gdpr_compliant        Boolean? @default(false) /// GDPR compliance status
   waitlist                 Boolean? @default(false) /// Waitlist participation
@@ -1596,19 +1555,18 @@ model UserProfile {
   updated_at               DateTime @default(now()) @db.Timestamptz(6)
 
   // Relations
-  users_bucket        Bucket[]
-  users_file          FileMetadata[]
-  users_file_share    FileShareUser[]
+  users_bucket     Bucket[]
+  users_file       FileMetadata[]
+  users_file_share FileShareUser[]
 
-  @@map("user_profiles")
-  @@schema("swarm-user")
   @@index([user_id], name: "idx_user_profiles_user_id")
   @@index([country], name: "idx_user_profiles_country")
   @@index([subscribe_newsletter], name: "idx_user_profiles_newsletter")
   @@index([waitlist], name: "idx_user_profiles_waitlist")
   @@index([created_at], name: "idx_user_profiles_created_at")
+  @@map("user_profiles")
+  @@schema("swarm-user")
 }
-
 
 // === WAITLIST-POSITION-HISTORY ===
 // From: prisma/schemas/swarm-waitlist/waitlist-position-history.prisma
@@ -1618,42 +1576,42 @@ model UserProfile {
 
 /// Historical tracking of waitlist position changes
 model WaitlistPositionHistory {
-  position_history_id  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  waitlist_entry_id    String   @db.Uuid /// Foreign key to WaitlistEntry
-  old_position         Int?     /// Previous position (null for initial entry)
-  new_position         Int      /// New position in waitlist
-  total_count          Int      /// Total number of people in waitlist at this time
+  position_history_id  String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  waitlist_entry_id    String                       @db.Uuid /// Foreign key to WaitlistEntry
+  old_position         Int? /// Previous position (null for initial entry)
+  new_position         Int /// New position in waitlist
+  total_count          Int /// Total number of people in waitlist at this time
   change_reason        WaitlistPositionChangeReason /// Reason for position change
-  change_description   String?  /// Additional details about the change
-  batch_id             String?  @db.Uuid /// ID for bulk position updates
-  admin_user_id        String?  @db.Uuid /// Admin who made manual changes
-  notification_sent    Boolean  @default(false) /// Whether user was notified of change
-  notification_sent_at DateTime? @db.Timestamptz(6) /// When notification was sent
-  created_at           DateTime @default(now()) @db.Timestamptz(6)
+  change_description   String? /// Additional details about the change
+  batch_id             String?                      @db.Uuid /// ID for bulk position updates
+  admin_user_id        String?                      @db.Uuid /// Admin who made manual changes
+  notification_sent    Boolean                      @default(false) /// Whether user was notified of change
+  notification_sent_at DateTime?                    @db.Timestamptz(6) /// When notification was sent
+  created_at           DateTime                     @default(now()) @db.Timestamptz(6)
 
   // Relations
-  waitlist_entry       WaitlistEntry @relation(fields: [waitlist_entry_id], references: [waitlist_entry_id], onDelete: Cascade)
+  waitlist_entry WaitlistEntry @relation(fields: [waitlist_entry_id], references: [waitlist_entry_id], onDelete: Cascade)
 
-  @@map("waitlist_position_history")
-  @@schema("swarm-waitlist")
   @@index([waitlist_entry_id], name: "idx_waitlist_position_history_entry_id")
   @@index([created_at], name: "idx_waitlist_position_history_created_at")
   @@index([change_reason], name: "idx_waitlist_position_history_reason")
   @@index([batch_id], name: "idx_waitlist_position_history_batch_id")
   @@index([notification_sent], name: "idx_waitlist_position_history_notification")
+  @@map("waitlist_position_history")
+  @@schema("swarm-waitlist")
 }
 
 /// Reasons for waitlist position changes
 enum WaitlistPositionChangeReason {
-  INITIAL_ENTRY     /// First time joining waitlist
-  USER_APPROVED     /// User ahead was approved and removed
-  USER_REJECTED     /// User ahead was rejected and removed
-  PRIORITY_BOOST    /// Position improved due to priority scoring
-  PRIORITY_PENALTY  /// Position worsened due to priority scoring
-  REFERRAL_BONUS    /// Position improved due to referral
-  ADMIN_ADJUSTMENT  /// Manual adjustment by admin
-  BULK_REORDER      /// Bulk reordering of waitlist
-  USER_WITHDREW     /// User ahead withdrew from waitlist
+  INITIAL_ENTRY /// First time joining waitlist
+  USER_APPROVED /// User ahead was approved and removed
+  USER_REJECTED /// User ahead was rejected and removed
+  PRIORITY_BOOST /// Position improved due to priority scoring
+  PRIORITY_PENALTY /// Position worsened due to priority scoring
+  REFERRAL_BONUS /// Position improved due to referral
+  ADMIN_ADJUSTMENT /// Manual adjustment by admin
+  BULK_REORDER /// Bulk reordering of waitlist
+  USER_WITHDREW /// User ahead withdrew from waitlist
 
   @@schema("swarm-waitlist")
 }
@@ -1666,21 +1624,20 @@ model WaitlistAnalytics {
   new_entries_today    Int      @default(0) /// New entries added today
   approved_today       Int      @default(0) /// Entries approved today
   rejected_today       Int      @default(0) /// Entries rejected today
-  average_wait_time    Float?   /// Average wait time in days
-  conversion_rate      Float?   /// Approval rate percentage
-  top_referral_sources Json?    /// Top referral sources data
-  question_responses   Json?    /// Aggregated question response data
-  geographic_data      Json?    /// Geographic distribution data
+  average_wait_time    Float? /// Average wait time in days
+  conversion_rate      Float? /// Approval rate percentage
+  top_referral_sources Json? /// Top referral sources data
+  question_responses   Json? /// Aggregated question response data
+  geographic_data      Json? /// Geographic distribution data
   created_at           DateTime @default(now()) @db.Timestamptz(6)
   updated_at           DateTime @default(now()) @db.Timestamptz(6)
 
-  @@map("waitlist_analytics")
-  @@schema("swarm-waitlist")
   @@unique([date], name: "unique_analytics_date")
   @@index([date], name: "idx_waitlist_analytics_date")
   @@index([created_at], name: "idx_waitlist_analytics_created_at")
+  @@map("waitlist_analytics")
+  @@schema("swarm-waitlist")
 }
-
 
 // === WAITLIST-QUESTIONS ===
 // From: prisma/schemas/swarm-waitlist/waitlist-questions.prisma
@@ -1690,78 +1647,77 @@ model WaitlistAnalytics {
 
 /// Dynamic questions configuration for waitlist forms
 model WaitlistQuestion {
-  question_id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  question_text        String   /// The question text displayed to users
-  question_type        WaitlistQuestionType /// Type of input field
-  is_required          Boolean  @default(false) /// Whether this question is mandatory
-  display_order        Int      @default(0) /// Order in which questions appear
-  is_active            Boolean  @default(true) /// Whether question is currently active
-  placeholder_text     String?  /// Placeholder text for input fields
-  help_text            String?  /// Additional help text or instructions
-  validation_rules     Json?    /// JSON object with validation rules
-  conditional_logic    Json?    /// JSON object defining when to show this question
-  max_length           Int?     /// Maximum character length for text inputs
-  min_length           Int?     /// Minimum character length for text inputs
-  default_value        String?  /// Default value for the question
-  section_name         String?  /// Group questions into sections
-  created_at           DateTime @default(now()) @db.Timestamptz(6)
-  updated_at           DateTime @default(now()) @db.Timestamptz(6)
+  question_id       String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  question_text     String /// The question text displayed to users
+  question_type     WaitlistQuestionType /// Type of input field
+  is_required       Boolean              @default(false) /// Whether this question is mandatory
+  display_order     Int                  @default(0) /// Order in which questions appear
+  is_active         Boolean              @default(true) /// Whether question is currently active
+  placeholder_text  String? /// Placeholder text for input fields
+  help_text         String? /// Additional help text or instructions
+  validation_rules  Json? /// JSON object with validation rules
+  conditional_logic Json? /// JSON object defining when to show this question
+  max_length        Int? /// Maximum character length for text inputs
+  min_length        Int? /// Minimum character length for text inputs
+  default_value     String? /// Default value for the question
+  section_name      String? /// Group questions into sections
+  created_at        DateTime             @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime             @default(now()) @db.Timestamptz(6)
 
   // Relations
-  options              WaitlistQuestionOption[]
-  responses            WaitlistResponse[]
+  options   WaitlistQuestionOption[]
+  responses WaitlistResponse[]
 
-  @@map("waitlist_questions")
-  @@schema("swarm-waitlist")
   @@index([is_active], name: "idx_waitlist_questions_active")
   @@index([display_order], name: "idx_waitlist_questions_order")
   @@index([question_type], name: "idx_waitlist_questions_type")
   @@index([section_name], name: "idx_waitlist_questions_section")
   @@index([created_at], name: "idx_waitlist_questions_created_at")
+  @@map("waitlist_questions")
+  @@schema("swarm-waitlist")
 }
 
 /// Question type enumeration for different input types
 enum WaitlistQuestionType {
-  TEXT          /// Single line text input
-  TEXTAREA      /// Multi-line text input
-  EMAIL         /// Email input with validation
-  PHONE         /// Phone number input
-  NUMBER        /// Numeric input
-  URL           /// URL input with validation
+  TEXT /// Single line text input
+  TEXTAREA /// Multi-line text input
+  EMAIL /// Email input with validation
+  PHONE /// Phone number input
+  NUMBER /// Numeric input
+  URL /// URL input with validation
   SINGLE_CHOICE /// Radio buttons (single selection)
   MULTIPLE_CHOICE /// Checkboxes (multiple selections)
-  DROPDOWN      /// Select dropdown
-  DATE          /// Date picker
-  BOOLEAN       /// Yes/No or True/False
-  RATING        /// Star rating or numeric scale
-  FILE_UPLOAD   /// File upload field
+  DROPDOWN /// Select dropdown
+  DATE /// Date picker
+  BOOLEAN /// Yes/No or True/False
+  RATING /// Star rating or numeric scale
+  FILE_UPLOAD /// File upload field
 
   @@schema("swarm-waitlist")
 }
 
 /// Options for choice-based questions (single/multiple choice, dropdown)
 model WaitlistQuestionOption {
-  option_id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  question_id          String   @db.Uuid /// Foreign key to WaitlistQuestion
-  option_text          String   /// Display text for the option
-  option_value         String   /// Value stored when selected
-  display_order        Int      @default(0) /// Order in which options appear
-  is_active            Boolean  @default(true) /// Whether option is currently available
-  is_other_option      Boolean  @default(false) /// Whether this triggers "other" text input
-  conditional_logic    Json?    /// JSON object for conditional display
-  created_at           DateTime @default(now()) @db.Timestamptz(6)
-  updated_at           DateTime @default(now()) @db.Timestamptz(6)
+  option_id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  question_id       String   @db.Uuid /// Foreign key to WaitlistQuestion
+  option_text       String /// Display text for the option
+  option_value      String /// Value stored when selected
+  display_order     Int      @default(0) /// Order in which options appear
+  is_active         Boolean  @default(true) /// Whether option is currently available
+  is_other_option   Boolean  @default(false) /// Whether this triggers "other" text input
+  conditional_logic Json? /// JSON object for conditional display
+  created_at        DateTime @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime @default(now()) @db.Timestamptz(6)
 
   // Relations
-  question             WaitlistQuestion @relation(fields: [question_id], references: [question_id], onDelete: Cascade)
+  question WaitlistQuestion @relation(fields: [question_id], references: [question_id], onDelete: Cascade)
 
-  @@map("waitlist_question_options")
-  @@schema("swarm-waitlist")
   @@index([question_id], name: "idx_waitlist_question_options_question_id")
   @@index([display_order], name: "idx_waitlist_question_options_order")
   @@index([is_active], name: "idx_waitlist_question_options_active")
+  @@map("waitlist_question_options")
+  @@schema("swarm-waitlist")
 }
-
 
 // === WAITLIST-RESPONSES ===
 // From: prisma/schemas/swarm-waitlist/waitlist-responses.prisma
@@ -1771,34 +1727,33 @@ model WaitlistQuestionOption {
 
 /// User responses to waitlist questions
 model WaitlistResponse {
-  response_id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  waitlist_entry_id    String   @db.Uuid /// Foreign key to WaitlistEntry
-  question_id          String   @db.Uuid /// Foreign key to WaitlistQuestion
-  response_text        String?  /// Text response for text/textarea/email/phone/url questions
-  response_number      Float?   /// Numeric response for number/rating questions
-  response_boolean     Boolean? /// Boolean response for yes/no questions
-  response_date        DateTime? @db.Date /// Date response for date questions
-  selected_option_ids  String[] /// Array of selected option IDs for choice questions
-  file_urls            String[] /// Array of file URLs for file upload questions
-  other_text           String?  /// Additional text when "Other" option is selected
-  is_valid             Boolean  @default(true) /// Whether response passed validation
-  validation_errors    Json?    /// JSON array of validation error messages
-  created_at           DateTime @default(now()) @db.Timestamptz(6)
-  updated_at           DateTime @default(now()) @db.Timestamptz(6)
+  response_id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  waitlist_entry_id   String    @db.Uuid /// Foreign key to WaitlistEntry
+  question_id         String    @db.Uuid /// Foreign key to WaitlistQuestion
+  response_text       String? /// Text response for text/textarea/email/phone/url questions
+  response_number     Float? /// Numeric response for number/rating questions
+  response_boolean    Boolean? /// Boolean response for yes/no questions
+  response_date       DateTime? @db.Date /// Date response for date questions
+  selected_option_ids String[] /// Array of selected option IDs for choice questions
+  file_urls           String[] /// Array of file URLs for file upload questions
+  other_text          String? /// Additional text when "Other" option is selected
+  is_valid            Boolean   @default(true) /// Whether response passed validation
+  validation_errors   Json? /// JSON array of validation error messages
+  created_at          DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime  @default(now()) @db.Timestamptz(6)
 
   // Relations
-  waitlist_entry       WaitlistEntry @relation(fields: [waitlist_entry_id], references: [waitlist_entry_id], onDelete: Cascade)
-  question             WaitlistQuestion @relation(fields: [question_id], references: [question_id], onDelete: Cascade)
+  waitlist_entry WaitlistEntry    @relation(fields: [waitlist_entry_id], references: [waitlist_entry_id], onDelete: Cascade)
+  question       WaitlistQuestion @relation(fields: [question_id], references: [question_id], onDelete: Cascade)
 
-  @@map("waitlist_responses")
-  @@schema("swarm-waitlist")
   @@unique([waitlist_entry_id, question_id], name: "unique_entry_question_response")
   @@index([waitlist_entry_id], name: "idx_waitlist_responses_entry_id")
   @@index([question_id], name: "idx_waitlist_responses_question_id")
   @@index([is_valid], name: "idx_waitlist_responses_valid")
   @@index([created_at], name: "idx_waitlist_responses_created_at")
+  @@map("waitlist_responses")
+  @@schema("swarm-waitlist")
 }
-
 
 // === WAITLIST-SETTINGS ===
 // From: prisma/schemas/swarm-waitlist/waitlist-settings.prisma
@@ -1808,90 +1763,89 @@ model WaitlistResponse {
 
 /// Global waitlist configuration and settings
 model WaitlistSettings {
-  settings_id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  setting_key          String   @unique /// Unique setting identifier
-  setting_value        String   /// Setting value (JSON string for complex values)
-  setting_type         WaitlistSettingType /// Type of setting value
-  description          String?  /// Human-readable description of setting
-  is_public            Boolean  @default(false) /// Whether setting is visible to users
-  is_editable          Boolean  @default(true) /// Whether setting can be modified
-  validation_rules     Json?    /// JSON object with validation rules
-  default_value        String?  /// Default value for the setting
-  category             String?  /// Setting category for organization
-  created_at           DateTime @default(now()) @db.Timestamptz(6)
-  updated_at           DateTime @default(now()) @db.Timestamptz(6)
+  settings_id      String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  setting_key      String              @unique /// Unique setting identifier
+  setting_value    String /// Setting value (JSON string for complex values)
+  setting_type     WaitlistSettingType /// Type of setting value
+  description      String? /// Human-readable description of setting
+  is_public        Boolean             @default(false) /// Whether setting is visible to users
+  is_editable      Boolean             @default(true) /// Whether setting can be modified
+  validation_rules Json? /// JSON object with validation rules
+  default_value    String? /// Default value for the setting
+  category         String? /// Setting category for organization
+  created_at       DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime            @default(now()) @db.Timestamptz(6)
 
-  @@map("waitlist_settings")
-  @@schema("swarm-waitlist")
   @@index([setting_key], name: "idx_waitlist_settings_key")
   @@index([category], name: "idx_waitlist_settings_category")
   @@index([is_public], name: "idx_waitlist_settings_public")
+  @@map("waitlist_settings")
+  @@schema("swarm-waitlist")
 }
 
 /// Setting value types
 enum WaitlistSettingType {
-  STRING    /// Text string
-  NUMBER    /// Numeric value
-  BOOLEAN   /// True/false value
-  JSON      /// JSON object
-  EMAIL     /// Email address
-  URL       /// Website URL
-  DATE      /// Date value
-  TIME      /// Time value
+  STRING /// Text string
+  NUMBER /// Numeric value
+  BOOLEAN /// True/false value
+  JSON /// JSON object
+  EMAIL /// Email address
+  URL /// Website URL
+  DATE /// Date value
+  TIME /// Time value
 
   @@schema("swarm-waitlist")
 }
 
 /// Waitlist campaigns for different product launches or features
 model WaitlistCampaign {
-  campaign_id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name                 String   /// Campaign name
-  slug                 String   @unique /// URL-friendly campaign identifier
-  description          String?  /// Campaign description
+  campaign_id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                 String /// Campaign name
+  slug                 String    @unique /// URL-friendly campaign identifier
+  description          String? /// Campaign description
   start_date           DateTime? @db.Timestamptz(6) /// Campaign start date
   end_date             DateTime? @db.Timestamptz(6) /// Campaign end date
-  is_active            Boolean  @default(true) /// Whether campaign is currently active
-  max_entries          Int?     /// Maximum number of entries allowed
-  priority_multiplier  Float    @default(1.0) /// Priority scoring multiplier
+  is_active            Boolean   @default(true) /// Whether campaign is currently active
+  max_entries          Int? /// Maximum number of entries allowed
+  priority_multiplier  Float     @default(1.0) /// Priority scoring multiplier
   custom_questions     String[] /// Array of question IDs specific to this campaign
-  landing_page_url     String?  /// Custom landing page URL
-  success_redirect_url String?  /// Redirect URL after successful signup
-  email_templates      Json?    /// Custom email templates for this campaign
-  metadata             Json?    /// Additional campaign metadata
-  created_at           DateTime @default(now()) @db.Timestamptz(6)
-  updated_at           DateTime @default(now()) @db.Timestamptz(6)
+  landing_page_url     String? /// Custom landing page URL
+  success_redirect_url String? /// Redirect URL after successful signup
+  email_templates      Json? /// Custom email templates for this campaign
+  metadata             Json? /// Additional campaign metadata
+  created_at           DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime  @default(now()) @db.Timestamptz(6)
 
   // Relations
-  entries              WaitlistCampaignEntry[]
+  entries WaitlistCampaignEntry[]
 
-  @@map("waitlist_campaigns")
-  @@schema("swarm-waitlist")
   @@index([slug], name: "idx_waitlist_campaigns_slug")
   @@index([is_active], name: "idx_waitlist_campaigns_active")
   @@index([start_date], name: "idx_waitlist_campaigns_start_date")
   @@index([end_date], name: "idx_waitlist_campaigns_end_date")
+  @@map("waitlist_campaigns")
+  @@schema("swarm-waitlist")
 }
 
 /// Junction table linking waitlist entries to campaigns
 model WaitlistCampaignEntry {
-  campaign_entry_id    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  campaign_id          String   @db.Uuid /// Foreign key to WaitlistCampaign
-  waitlist_entry_id    String   @db.Uuid /// Foreign key to WaitlistEntry
-  joined_at            DateTime @default(now()) @db.Timestamptz(6)
-  campaign_metadata    Json?    /// Campaign-specific metadata for this entry
+  campaign_entry_id String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  campaign_id       String   @db.Uuid /// Foreign key to WaitlistCampaign
+  waitlist_entry_id String   @db.Uuid /// Foreign key to WaitlistEntry
+  joined_at         DateTime @default(now()) @db.Timestamptz(6)
+  campaign_metadata Json? /// Campaign-specific metadata for this entry
 
   // Relations
-  campaign             WaitlistCampaign @relation(fields: [campaign_id], references: [campaign_id], onDelete: Cascade)
-  waitlist_entry       WaitlistEntry @relation(fields: [waitlist_entry_id], references: [waitlist_entry_id], onDelete: Cascade)
+  campaign       WaitlistCampaign @relation(fields: [campaign_id], references: [campaign_id], onDelete: Cascade)
+  waitlist_entry WaitlistEntry    @relation(fields: [waitlist_entry_id], references: [waitlist_entry_id], onDelete: Cascade)
 
-  @@map("waitlist_campaign_entries")
-  @@schema("swarm-waitlist")
   @@unique([campaign_id, waitlist_entry_id], name: "unique_campaign_entry")
   @@index([campaign_id], name: "idx_waitlist_campaign_entries_campaign_id")
   @@index([waitlist_entry_id], name: "idx_waitlist_campaign_entries_entry_id")
   @@index([joined_at], name: "idx_waitlist_campaign_entries_joined_at")
+  @@map("waitlist_campaign_entries")
+  @@schema("swarm-waitlist")
 }
-
 
 // === WAITLIST-ENTRIES ===
 // From: prisma/schemas/swarm-waitlist/waitlist-entries.prisma
@@ -1901,33 +1855,31 @@ model WaitlistCampaignEntry {
 
 /// Main waitlist registration entry linking to user profiles
 model WaitlistEntry {
-  waitlist_entry_id    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id              String   @db.Uuid /// Links to auth.users table
-  email                String   /// User email address (for non-authenticated users)
-  name                 String   /// User's full name
-  company              String?  /// Optional company name
-  position             Int      @default(0) /// Current position in waitlist
-  total_users_ahead    Int      @default(0) /// Number of users ahead in queue
-  status               WaitlistStatus @default(PENDING) /// Current waitlist status
-  priority_score       Int      @default(0) /// Priority scoring for queue management
-  referral_code        String?  /// Optional referral code used
-  utm_source           String?  /// Marketing attribution source
-  utm_medium           String?  /// Marketing attribution medium
-  utm_campaign         String?  /// Marketing attribution campaign
-  ip_address           String?  /// IP address for duplicate detection
-  user_agent           String?  /// Browser user agent
-  created_at           DateTime @default(now()) @db.Timestamptz(6)
-  updated_at           DateTime @default(now()) @db.Timestamptz(6)
-  approved_at          DateTime? @db.Timestamptz(6) /// When user was approved
-  notified_at          DateTime? @db.Timestamptz(6) /// When user was notified of approval
+  waitlist_entry_id String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id           String         @db.Uuid /// Links to auth.users table
+  email             String /// User email address (for non-authenticated users)
+  name              String /// User's full name
+  company           String? /// Optional company name
+  position          Int            @default(0) /// Current position in waitlist
+  total_users_ahead Int            @default(0) /// Number of users ahead in queue
+  status            WaitlistStatus @default(PENDING) /// Current waitlist status
+  priority_score    Int            @default(0) /// Priority scoring for queue management
+  referral_code     String? /// Optional referral code used
+  utm_source        String? /// Marketing attribution source
+  utm_medium        String? /// Marketing attribution medium
+  utm_campaign      String? /// Marketing attribution campaign
+  ip_address        String? /// IP address for duplicate detection
+  user_agent        String? /// Browser user agent
+  created_at        DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime       @default(now()) @db.Timestamptz(6)
+  approved_at       DateTime?      @db.Timestamptz(6) /// When user was approved
+  notified_at       DateTime?      @db.Timestamptz(6) /// When user was notified of approval
 
   // Relations
-  responses            WaitlistResponse[]
-  position_history     WaitlistPositionHistory[]
-  campaign_entries     WaitlistCampaignEntry[]
+  responses        WaitlistResponse[]
+  position_history WaitlistPositionHistory[]
+  campaign_entries WaitlistCampaignEntry[]
 
-  @@map("waitlist_entries")
-  @@schema("swarm-waitlist")
   @@unique([email], name: "unique_waitlist_email")
   @@unique([user_id], name: "unique_waitlist_user")
   @@index([user_id], name: "idx_waitlist_entries_user_id")
@@ -1937,20 +1889,21 @@ model WaitlistEntry {
   @@index([created_at], name: "idx_waitlist_entries_created_at")
   @@index([priority_score], name: "idx_waitlist_entries_priority_score")
   @@index([referral_code], name: "idx_waitlist_entries_referral_code")
+  @@map("waitlist_entries")
+  @@schema("swarm-waitlist")
 }
 
 /// Waitlist status enumeration
 enum WaitlistStatus {
-  PENDING     /// Waiting for approval
-  APPROVED    /// Approved for access
-  REJECTED    /// Application rejected
-  INVITED     /// Invitation sent
-  ACTIVATED   /// User has activated account
-  SUSPENDED   /// Temporarily suspended
+  PENDING /// Waiting for approval
+  APPROVED /// Approved for access
+  REJECTED /// Application rejected
+  INVITED /// Invitation sent
+  ACTIVATED /// User has activated account
+  SUSPENDED /// Temporarily suspended
 
   @@schema("swarm-waitlist")
 }
-
 
 // === WEBHOOKS ===
 // From: prisma/schemas/swarm-webhook/webhooks.prisma
@@ -2001,7 +1954,6 @@ model Webhook {
   @@schema("swarm-webhook")
 }
 
-
 // === WORKFLOW-TYPES ===
 // From: prisma/schemas/swarm-workflow/workflow-types.prisma
 
@@ -2024,7 +1976,6 @@ model WorkflowType {
   @@schema("swarm-workflow")
 }
 
-
 // === WORKFLOWS ===
 // From: prisma/schemas/swarm-workflow/workflows.prisma
 
@@ -2037,11 +1988,11 @@ model Workflow {
   user_id             String?  @db.Uuid /// Workflow owner
   company_id          String?  @db.Uuid /// Associated company
   workflow_type_id    String?  @db.Uuid /// Workflow type classification
-  description         String?  /// Workflow description
-  workflow_name       String   /// Workflow display name
-  workflow_definition Json     /// Workflow configuration and steps
+  description         String? /// Workflow description
+  workflow_name       String /// Workflow display name
+  workflow_definition Json /// Workflow configuration and steps
   version             Int?     @default(1) /// Workflow version number
-  metadata            Json?    /// Additional workflow metadata
+  metadata            Json? /// Additional workflow metadata
   status              String?  @default("active") /// Workflow status (active/inactive/draft)
   created_at          DateTime @default(now()) @db.Timestamptz(6)
   updated_at          DateTime @default(now()) @db.Timestamptz(6)
@@ -2052,13 +2003,12 @@ model Workflow {
   company       Company?      @relation(fields: [company_id], references: [company_id])
   workflow_type WorkflowType? @relation(fields: [workflow_type_id], references: [type_id])
 
-  @@map("workflows")
-  @@schema("swarm-workflow")
   @@index([user_id], name: "idx_workflows_user_id")
   @@index([company_id], name: "idx_workflows_company_id")
   @@index([is_public], name: "idx_workflows_is_public")
   @@index([status], name: "idx_workflows_status")
   @@index([created_at], name: "idx_workflows_created_at")
   @@index([workflow_name], name: "idx_workflows_name")
+  @@map("workflows")
+  @@schema("swarm-workflow")
 }
-

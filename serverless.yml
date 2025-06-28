@@ -1,0 +1,23 @@
+service: app
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ap-southeast-1
+package:
+  excludeDevDependencies: true
+  patterns:
+    - '!node_modules/.prisma/client/libquery_engine-*'
+    - 'node_modules/.prisma/client/libquery_engine-rhel-*'
+    - '!node_modules/prisma/libquery_engine-*'
+    - '!node_modules/@prisma/engines/**'
+    - '!node_modules/.bin/**'
+    - '!**/*.test.ts'
+    - '!**/*.spec.ts'
+    - '!.git/**'
+    - '!.vscode/**'
+    - '!test/**'
+
+functions:
+  http:
+    handler: dist/lambda.handler

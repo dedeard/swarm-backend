@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { AgentCategory as PrismaAgentCategory } from '@prisma/client';
-import { JsonValue } from 'type-fest';
 
 export class AgentCategory implements PrismaAgentCategory {
   @ApiProperty({
@@ -23,7 +22,7 @@ export class AgentCategory implements PrismaAgentCategory {
     example: '{}',
     required: false,
   })
-  metadata: JsonValue;
+  metadata: any;
 
   @ApiProperty({
     description: 'Creation timestamp',

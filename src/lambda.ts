@@ -1,40 +1,34 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { Handler } from 'aws-lambda';
+import serverless from 'serverless-http';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 
+process.env.NO_COLOR = 'true';
+
+let server: Handler;
+
+const SLS: typeof serverless = serverless || require('serverless-http');
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
-  // Set up global validation pipe
+  app.enableCors();
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,
       transform: true,
+      whitelist: true,
       forbidNonWhitelisted: true,
     }),
   );
-
-  // Set up Swagger documentation
-  const config = new DocumentBuilder()
-    .setTitle('Swarm Component API')
-    .setDescription('The Swarm Component API description')
-    .setVersion('1.0')
-    .addTag('swarm-component')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document, {
-    swaggerOptions: {
-      security: [{ bearer: [] }],
-    },
-  });
-
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalInterceptors(new ResponseInterceptor());
-
-  await app.listen(8080);
+  await app.init();
+  return SLS(app.getHttpAdapter().getInstance());
 }
-bootstrap();
+
+export const handler: Handler = async (...ctx) => {
+  server = server ?? (await bootstrap());
+  return server(...ctx);
+};
