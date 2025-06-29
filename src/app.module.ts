@@ -13,6 +13,11 @@ import { ToolsModule } from './tools/tools.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      load: [
+        () => ({
+          port: parseInt(process.env.PORT || '3000', 10),
+        }),
+      ],
     }),
     PrismaModule,
     AgentsModule,
