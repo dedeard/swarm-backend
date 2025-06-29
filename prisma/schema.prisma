@@ -165,6 +165,9 @@ model AgentCategory {
   templates AgentTemplate[]
   prompts   AgentPrompt[]
 
+  scope_type ScopeType @default(INDIVIDUAL)
+  owner_id   String    @db.Uuid
+
   @@map("categories")
   @@schema("swarm-agent")
 }
@@ -269,6 +272,8 @@ model Agent {
   component_associations ComponentAgentAssociation[]
   team_members           TeamMember[]
   agent_bucket_accesses  AgentBucketAccess[]
+  scope_type             ScopeType                   @default(INDIVIDUAL)
+  owner_id               String                      @db.Uuid
 
   @@index([user_id], name: "idx_agents_user_id")
   @@index([company_id], name: "idx_agents_company_id")
@@ -1435,7 +1440,7 @@ model TeamMember {
 
 /// External tool integration with multi-tenant support
 model Tool {
-  tool_id              String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tool_id              String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   name                 String /// Tool display name
   description          String? /// Tool description
   version              String? /// Current version
@@ -1445,8 +1450,8 @@ model Tool {
   env                  Json? /// Environment variables configuration
   required_env         Json? /// Required environment variables
   status               String? /// Tool availability status
-  user_id              String?  @db.Uuid /// Tool owner
-  company_id           String?  @db.Uuid /// Associated company
+  user_id              String?   @db.Uuid /// Tool owner
+  company_id           String?   @db.Uuid /// Associated company
   logo_url             String? /// Tool logo URL
   slug                 String? /// URL-friendly identifier
   website              String? /// Tool website
@@ -1457,7 +1462,9 @@ model Tool {
   security_note        String? /// Security considerations
   usage_suggestions    Json? /// Usage recommendations
   functions            Json? /// Available functions/capabilities
-  is_public            Boolean? @default(false) /// Public visibility
+  is_public            Boolean?  @default(false) /// Public visibility
+  scope_type           ScopeType @default(INDIVIDUAL)
+  owner_id             String    @db.Uuid
 
   // Relations
   company      Company?     @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
@@ -1902,6 +1909,13 @@ enum WaitlistStatus {
   SUSPENDED /// Temporarily suspended
 
   @@schema("swarm-waitlist")
+}
+
+enum ScopeType {
+  INDIVIDUAL
+  COMPANY
+
+  @@schema("swarm-agent")
 }
 
 // === WEBHOOKS ===

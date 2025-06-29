@@ -70,8 +70,11 @@ export class AgentsController {
     status: HttpStatus.FORBIDDEN,
     description: 'Insufficient permissions.',
   })
-  findAll(): Promise<PrismaAgent[]> {
-    return this.agentsService.findAll();
+  findAll(
+    @User('userId') userId: string,
+    @User('companyId') companyId?: string,
+  ): Promise<PrismaAgent[]> {
+    return this.agentsService.findAll(userId, companyId);
   }
 
   @Get(':id')
@@ -91,8 +94,12 @@ export class AgentsController {
     status: HttpStatus.FORBIDDEN,
     description: 'Insufficient permissions.',
   })
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<PrismaAgent | null> {
-    return this.agentsService.findOne(id);
+  findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @User('userId') userId: string,
+    @User('companyId') companyId?: string,
+  ): Promise<PrismaAgent | null> {
+    return this.agentsService.findOne(id, userId, companyId);
   }
 
   @Put(':id')
@@ -148,7 +155,11 @@ export class AgentsController {
     description: 'Insufficient permissions.',
   })
   @HttpCode(HttpStatus.OK)
-  remove(@Param('id', ParseUUIDPipe) id: string): Promise<any> {
-    return this.agentsService.remove(id);
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @User('userId') userId: string,
+    @User('companyId') companyId?: string,
+  ): Promise<any> {
+    return this.agentsService.remove(id, userId, companyId);
   }
 }

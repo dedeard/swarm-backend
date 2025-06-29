@@ -25,7 +25,9 @@ export class ToolsService {
     };
 
     if (company_id) {
-      where.company_id = company_id;
+      where.company = {
+        company_id: company_id,
+      };
     } else {
       where.user_id = userId;
     }
@@ -40,11 +42,29 @@ export class ToolsService {
       );
     }
 
+    const data: Prisma.ToolCreateInput = {
+      name: createToolDto.name,
+      user_id: userId,
+      owner_id: userId,
+      description: createToolDto.description,
+      version: createToolDto.version,
+      cmd_install_: createToolDto.cmd_install_,
+      port: createToolDto.port,
+      method: createToolDto.method,
+      env: createToolDto.env,
+      required_env: createToolDto.required_env,
+      is_public: createToolDto.is_public,
+      scope_type: company_id ? 'COMPANY' : 'INDIVIDUAL',
+    };
+
+    if (company_id) {
+      data.company = {
+        connect: { company_id: company_id },
+      };
+    }
+
     return this.prisma.tool.create({
-      data: {
-        ...createToolDto,
-        user_id: userId,
-      },
+      data,
     });
   }
 

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Prisma, Tool as PrismaTool } from '@prisma/client';
+import { Prisma, Tool as PrismaTool, ScopeType } from '@prisma/client';
 
 export class Tool implements PrismaTool {
   @ApiProperty({
@@ -212,4 +212,17 @@ export class Tool implements PrismaTool {
     example: true,
   })
   is_public: boolean | null;
+
+  @ApiProperty({
+    description: 'Scope type (INDIVIDUAL or COMPANY)',
+    example: 'INDIVIDUAL',
+    enum: ScopeType,
+  })
+  scope_type: ScopeType;
+
+  @ApiProperty({
+    description: 'Owner ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  owner_id: string;
 }

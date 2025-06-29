@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Agent as PrismaAgent } from '@prisma/client';
+import { Agent as PrismaAgent, ScopeType } from '@prisma/client';
 
 export class Agent implements PrismaAgent {
   @ApiProperty({
@@ -109,6 +109,19 @@ export class Agent implements PrismaAgent {
     example: 'gpt-4',
   })
   model_default: string | null;
+
+  @ApiProperty({
+    description: 'Scope type (INDIVIDUAL or COMPANY)',
+    example: 'INDIVIDUAL',
+    enum: ScopeType,
+  })
+  scope_type: ScopeType;
+
+  @ApiProperty({
+    description: 'Owner ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  owner_id: string;
 
   get id(): string {
     return this.agent_id;

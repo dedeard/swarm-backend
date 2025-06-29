@@ -7,6 +7,7 @@ import { AgentsModule } from './agents/agents.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { ModeGuard } from './common/guards/mode.guard';
 import { PermissionGuard } from './common/guards/permission.guard';
 import { RoleGuard } from './common/guards/role.guard';
 import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
@@ -49,6 +50,10 @@ import { ToolsModule } from './tools/tools.module';
     {
       provide: APP_GUARD,
       useClass: PermissionGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ModeGuard,
     },
   ],
 })

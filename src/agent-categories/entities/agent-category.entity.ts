@@ -1,5 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { AgentCategory as PrismaAgentCategory } from '@prisma/client';
+import {
+  AgentCategory as PrismaAgentCategory,
+  ScopeType,
+} from '@prisma/client';
 
 export class AgentCategory implements PrismaAgentCategory {
   @ApiProperty({
@@ -35,4 +38,17 @@ export class AgentCategory implements PrismaAgentCategory {
     example: '2023-01-01T00:00:00.000Z',
   })
   updated_at: Date;
+
+  @ApiProperty({
+    description: 'Scope type (INDIVIDUAL or COMPANY)',
+    example: 'INDIVIDUAL',
+    enum: ScopeType,
+  })
+  scope_type: ScopeType;
+
+  @ApiProperty({
+    description: 'Owner ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  owner_id: string;
 }

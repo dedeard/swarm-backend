@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { ScopeType } from '@prisma/client';
+import { IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreateAgentCategoryDto {
   @ApiProperty({
@@ -16,4 +17,19 @@ export class CreateAgentCategoryDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @ApiProperty({
+    description: 'Owner ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @IsUUID()
+  owner_id: string;
+
+  @ApiProperty({
+    description: 'Scope type (INDIVIDUAL or COMPANY)',
+    example: 'INDIVIDUAL',
+    enum: ScopeType,
+  })
+  @IsString()
+  scope_type: ScopeType;
 }
