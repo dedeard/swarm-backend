@@ -1,14 +1,18 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AgentCategoriesModule } from './agent-categories/agent-categories.module';
 import { AgentsModule } from './agents/agents.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { PermissionGuard } from './common/guards/permission.guard';
+import { RoleGuard } from './common/guards/role.guard';
 import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
 import { CompaniesModule } from './companies/companies.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { RbacModule } from './rbac/rbac.module';
 import { ToolsModule } from './tools/tools.module';
 
 @Module({
@@ -33,9 +37,20 @@ import { ToolsModule } from './tools/tools.module';
     CompaniesModule,
     AgentCategoriesModule,
     ToolsModule,
+    RbacModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: RoleGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PermissionGuard,
+    },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

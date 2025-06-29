@@ -15,6 +15,12 @@ import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Agent as PrismaAgent } from '@prisma/client';
 import { AuthGuard } from '../auth/auth.guard';
 import { User } from '../auth/user.decorator';
+import {
+  Permissions,
+  RolesAndPermissions,
+} from '../common/decorators/auth.decorator';
+import { Permission } from '../common/enums/permission.enum';
+import { Role } from '../common/enums/role.enum';
 import { AgentsService } from './agents.service';
 import { CreateAgentDto } from './dto/create-agent.dto';
 import { UpdateAgentDto } from './dto/update-agent.dto';
@@ -27,6 +33,10 @@ export class AgentsController {
   constructor(private readonly agentsService: AgentsService) {}
 
   @Post()
+  @RolesAndPermissions(
+    [Role.ADMIN, Role.AGENT_MANAGER],
+    [Permission.AGENT_CREATE],
+  )
   @ApiOperation({ summary: 'Create a new agent' })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -37,6 +47,10 @@ export class AgentsController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Invalid input data.',
   })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Insufficient permissions.',
+  })
   create(
     @Body() createAgentDto: CreateAgentDto,
     @User('userId') userId: string,
@@ -45,17 +59,23 @@ export class AgentsController {
   }
 
   @Get()
+  @Permissions(Permission.AGENT_READ)
   @ApiOperation({ summary: 'Get all agents' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Return all agents',
     type: [AgentEntity],
   })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Insufficient permissions.',
+  })
   findAll(): Promise<PrismaAgent[]> {
     return this.agentsService.findAll();
   }
 
   @Get(':id')
+  @Permissions(Permission.AGENT_READ)
   @ApiOperation({ summary: 'Get a agent by id' })
   @ApiParam({ name: 'id', description: 'The id of the agent' })
   @ApiResponse({
@@ -67,11 +87,19 @@ export class AgentsController {
     status: HttpStatus.NOT_FOUND,
     description: 'Agent not found',
   })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Insufficient permissions.',
+  })
   findOne(@Param('id', ParseUUIDPipe) id: string): Promise<PrismaAgent | null> {
     return this.agentsService.findOne(id);
   }
 
   @Put(':id')
+  @RolesAndPermissions(
+    [Role.ADMIN, Role.AGENT_MANAGER],
+    [Permission.AGENT_UPDATE],
+  )
   @ApiOperation({ summary: 'Update a agent' })
   @ApiParam({ name: 'id', description: 'The id of the agent' })
   @ApiResponse({
@@ -87,6 +115,10 @@ export class AgentsController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Invalid input data.',
   })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Insufficient permissions.',
+  })
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateAgentDto: UpdateAgentDto,
@@ -96,6 +128,10 @@ export class AgentsController {
   }
 
   @Delete(':id')
+  @RolesAndPermissions(
+    [Role.ADMIN, Role.AGENT_MANAGER],
+    [Permission.AGENT_DELETE],
+  )
   @ApiOperation({ summary: 'Delete a agent' })
   @ApiParam({ name: 'id', description: 'The id of the agent' })
   @ApiResponse({
@@ -106,6 +142,10 @@ export class AgentsController {
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
     description: 'Agent not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Insufficient permissions.',
   })
   @HttpCode(HttpStatus.OK)
   remove(@Param('id', ParseUUIDPipe) id: string): Promise<any> {

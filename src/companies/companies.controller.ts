@@ -12,8 +12,14 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Company as PrismaCompany } from '@prisma/client';
+import { Company } from '@prisma/client';
 import { AuthGuard } from '../auth/auth.guard';
+import {
+  Permissions,
+  RolesAndPermissions,
+} from '../common/decorators/auth.decorator';
+import { Permission } from '../common/enums/permission.enum';
+import { Role } from '../common/enums/role.enum';
 import { CompaniesService } from './companies.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
@@ -26,6 +32,7 @@ export class CompaniesController {
   constructor(private readonly companiesService: CompaniesService) {}
 
   @Post()
+  @RolesAndPermissions([Role.ADMIN], [Permission.COMPANY_MANAGE_SETTINGS])
   @ApiOperation({ summary: 'Create a new company' })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -36,22 +43,32 @@ export class CompaniesController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Invalid input data.',
   })
-  create(@Body() createCompanyDto: CreateCompanyDto): Promise<PrismaCompany> {
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Insufficient permissions.',
+  })
+  create(@Body() createCompanyDto: CreateCompanyDto): Promise<Company> {
     return this.companiesService.create(createCompanyDto);
   }
 
   @Get()
+  @Permissions(Permission.COMPANY_MANAGE_SETTINGS)
   @ApiOperation({ summary: 'Get all companies' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Return all companies',
     type: [CompanyEntity],
   })
-  findAll(): Promise<PrismaCompany[]> {
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Insufficient permissions.',
+  })
+  findAll(): Promise<Company[]> {
     return this.companiesService.findAll();
   }
 
   @Get(':id')
+  @Permissions(Permission.COMPANY_MANAGE_SETTINGS)
   @ApiOperation({ summary: 'Get a company by id' })
   @ApiParam({ name: 'id', description: 'The id of the company' })
   @ApiResponse({
@@ -63,13 +80,16 @@ export class CompaniesController {
     status: HttpStatus.NOT_FOUND,
     description: 'Company not found',
   })
-  findOne(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<PrismaCompany | null> {
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Insufficient permissions.',
+  })
+  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Company | null> {
     return this.companiesService.findOne(id);
   }
 
   @Put(':id')
+  @RolesAndPermissions([Role.ADMIN], [Permission.COMPANY_MANAGE_SETTINGS])
   @ApiOperation({ summary: 'Update a company' })
   @ApiParam({ name: 'id', description: 'The id of the company' })
   @ApiResponse({
@@ -85,14 +105,19 @@ export class CompaniesController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Invalid input data.',
   })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Insufficient permissions.',
+  })
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateCompanyDto: UpdateCompanyDto,
-  ): Promise<PrismaCompany> {
+  ): Promise<Company> {
     return this.companiesService.update(id, updateCompanyDto);
   }
 
   @Delete(':id')
+  @RolesAndPermissions([Role.ADMIN], [Permission.COMPANY_MANAGE_SETTINGS])
   @ApiOperation({ summary: 'Delete a company' })
   @ApiParam({ name: 'id', description: 'The id of the company' })
   @ApiResponse({
@@ -103,6 +128,10 @@ export class CompaniesController {
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
     description: 'Company not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Insufficient permissions.',
   })
   @HttpCode(HttpStatus.OK)
   remove(@Param('id', ParseUUIDPipe) id: string): Promise<any> {
