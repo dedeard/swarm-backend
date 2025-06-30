@@ -1,139 +1,135 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsJSON, IsOptional, IsString } from 'class-validator';
+import {
+  IsDateString,
+  IsEmail,
+  IsEnum,
+  IsObject,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
+import { SocialAccounts } from '../entities/company.entity';
+
+enum CompanySize {
+  XS = '1-10',
+  S = '11-50',
+  M = '51-200',
+  L = '201-500',
+  XL = '501-1000',
+  XXL = '1000-5000',
+  XXXL = '5000+',
+}
 
 export class CreateCompanyDto {
-  @ApiProperty({ description: 'Company display name', example: 'Acme Inc.' })
   @IsString()
+  @MinLength(2)
+  @MaxLength(100)
   name: string;
 
-  @ApiProperty({
-    description: 'Legal company name',
-    example: 'Acme Corporation',
-  })
   @IsString()
   @IsOptional()
+  @MaxLength(200)
   statutory_name?: string;
 
-  @ApiProperty({
-    description: 'Company description',
-    example: 'A leading provider of innovative solutions.',
-  })
   @IsString()
   @IsOptional()
+  @MaxLength(1000)
   description?: string;
 
-  @ApiProperty({ description: 'Physical address', example: '123 Main St' })
   @IsString()
   @IsOptional()
+  @MaxLength(200)
   address?: string;
 
-  @ApiProperty({ description: 'City location', example: 'Anytown' })
   @IsString()
   @IsOptional()
   city?: string;
 
-  @ApiProperty({ description: 'State or province', example: 'CA' })
   @IsString()
   @IsOptional()
+  @MinLength(2)
+  @MaxLength(50)
   state_province?: string;
 
-  @ApiProperty({ description: 'ZIP/postal code', example: '12345' })
   @IsString()
   @IsOptional()
+  @Matches(/^[0-9A-Z-]{3,10}$/, {
+    message: 'Invalid postal code format',
+  })
   postal_code?: string;
 
-  @ApiProperty({ description: 'Country code or name', example: 'USA' })
   @IsString()
   @IsOptional()
   country?: string;
 
-  @ApiProperty({ description: 'Contact phone number', example: '555-1234' })
   @IsString()
   @IsOptional()
+  @Matches(/^[+]?[0-9- ()]{10,20}$/, {
+    message: 'Invalid phone number format',
+  })
   phone?: string;
 
-  @ApiProperty({
-    description: 'Contact email address',
-    example: 'contact@acme.com',
-  })
-  @IsString()
+  @IsEmail()
   @IsOptional()
   email?: string;
 
-  @ApiProperty({
-    description: 'Company website URL',
-    example: 'https://acme.com',
-  })
   @IsString()
   @IsOptional()
+  @Matches(/^https?:\/\/.+/, {
+    message: 'Website must be a valid URL starting with http:// or https://',
+  })
   website?: string;
 
-  @ApiProperty({
-    description: 'Alternative website URL',
-    example: 'https://acme.org',
-  })
   @IsString()
   @IsOptional()
+  @Matches(/^https?:\/\/.+/, {
+    message:
+      'Website URL must be a valid URL starting with http:// or https://',
+  })
   website_url?: string;
 
-  @ApiProperty({
-    description: 'Social media account links',
-    example: { twitter: '@acme' },
-  })
-  @IsJSON()
+  @IsObject()
   @IsOptional()
-  social_accounts?: any;
+  social_accounts?: SocialAccounts;
 
-  @ApiProperty({
-    description: 'Chamber of commerce registration',
-    example: '123456789',
-  })
   @IsString()
   @IsOptional()
+  @Matches(/^[A-Z0-9-]{5,20}$/, {
+    message: 'Invalid Chamber of Commerce registration number format',
+  })
   chamber_of_commerce?: string;
 
-  @ApiProperty({
-    description: 'DUNS business identifier',
-    example: '123456789',
-  })
   @IsString()
   @IsOptional()
+  @Matches(/^[0-9]{9}$/, {
+    message: 'DUNS number must be exactly 9 digits',
+  })
   duns_number?: string;
 
-  @ApiProperty({
-    description: 'Tax identification number',
-    example: '987654321',
-  })
   @IsString()
   @IsOptional()
+  @Matches(/^[0-9-]{7,15}$/, {
+    message: 'Invalid tax ID format',
+  })
   tax_id?: string;
 
-  @ApiProperty({
-    description: 'Industry classification',
-    example: 'Technology',
-  })
   @IsString()
   @IsOptional()
   industry?: string;
 
-  @ApiProperty({
-    description: 'Company founding date',
-    example: '2000-01-01',
-  })
   @IsDateString()
   @IsOptional()
   founded_date?: Date;
 
-  @ApiProperty({ description: 'Employee count category', example: '100-500' })
-  @IsString()
+  @IsEnum(CompanySize)
   @IsOptional()
-  company_size?: string;
+  company_size?: CompanySize;
 
-  @ApiProperty({
-    description: 'Company logo URL',
-    example: 'https://acme.com/logo.png',
-  })
   @IsString()
   @IsOptional()
+  @Matches(/^https?:\/\/.+/, {
+    message: 'Logo URL must be a valid URL starting with http:// or https://',
+  })
   logo_url?: string;
 }

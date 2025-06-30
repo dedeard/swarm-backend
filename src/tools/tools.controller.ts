@@ -3,111 +3,112 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
-  HttpStatus,
   Param,
-  ParseUUIDPipe,
+  Patch,
   Post,
-  Put,
+  Request,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Tool } from '@prisma/client';
 import { AuthGuard } from '../auth/auth.guard';
-import { User } from '../auth/user.decorator';
+import {
+  CreateToolSecretDto,
+  ShareToolSecretWithCompanyRoleDto,
+  ShareToolSecretWithUserDto,
+} from './dto/create-tool-secret.dto';
 import { CreateToolDto } from './dto/create-tool.dto';
+import { UpdateToolSecretDto } from './dto/update-tool-secret.dto';
 import { UpdateToolDto } from './dto/update-tool.dto';
-import { Tool as ToolEntity } from './entities/tool.entity';
 import { ToolsService } from './tools.service';
 
-@ApiTags('tools')
 @Controller('tools')
 @UseGuards(AuthGuard)
 export class ToolsController {
   constructor(private readonly toolsService: ToolsService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new tool' })
-  @ApiResponse({
-    status: HttpStatus.CREATED,
-    description: 'The tool has been successfully created.',
-    type: ToolEntity,
-  })
-  @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Invalid input data.',
-  })
-  create(
-    @Body() createToolDto: CreateToolDto,
-    @User('sub') userId: string,
-  ): Promise<Tool> {
-    return this.toolsService.create(createToolDto, userId);
+  create(@Request() req, @Body() createToolDto: CreateToolDto) {
+    return this.toolsService.create({
+      ...createToolDto,
+      user_id: req.user.sub,
+    });
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all tools' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Return all tools',
-    type: [ToolEntity],
-  })
-  findAll(): Promise<Tool[]> {
-    return this.toolsService.findAll();
+  findAll(@Request() req) {
+    return this.toolsService.findAll(req.user.sub, req.user.company_id);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get a tool by id' })
-  @ApiParam({ name: 'id', description: 'The id of the tool' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Return the tool with the specified id',
-    type: ToolEntity,
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'Tool not found',
-  })
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Tool | null> {
+  findOne(@Param('id') id: string) {
     return this.toolsService.findOne(id);
   }
 
-  @Put(':id')
-  @ApiOperation({ summary: 'Update a tool' })
-  @ApiParam({ name: 'id', description: 'The id of the tool' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'The tool has been successfully updated.',
-    type: ToolEntity,
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'Tool not found',
-  })
-  @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Invalid input data.',
-  })
-  update(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateToolDto: UpdateToolDto,
-  ): Promise<Tool> {
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateToolDto: UpdateToolDto) {
     return this.toolsService.update(id, updateToolDto);
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete a tool' })
-  @ApiParam({ name: 'id', description: 'The id of the tool' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'The tool has been successfully deleted.',
-    type: ToolEntity,
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'Tool not found',
-  })
-  @HttpCode(HttpStatus.OK)
-  remove(@Param('id', ParseUUIDPipe) id: string): Promise<any> {
+  remove(@Param('id') id: string) {
     return this.toolsService.remove(id);
+  }
+
+  // Tool Secret Management
+  @Post(':id/secrets')
+  createSecret(
+    @Request() req,
+    @Param('id') toolId: string,
+    @Body() createToolSecretDto: CreateToolSecretDto,
+  ) {
+    return this.toolsService.createSecret(req.user.sub, {
+      ...createToolSecretDto,
+      tool_id: toolId,
+    });
+  }
+
+  @Patch('secrets/:id')
+  updateSecret(
+    @Param('id') id: string,
+    @Body() updateToolSecretDto: UpdateToolSecretDto,
+  ) {
+    return this.toolsService.updateSecret(id, updateToolSecretDto);
+  }
+
+  @Delete('secrets/:id')
+  removeSecret(@Param('id') id: string) {
+    return this.toolsService.removeSecret(id);
+  }
+
+  @Post('secrets/:id/share/user')
+  shareSecretWithUser(
+    @Param('id') id: string,
+    @Body() shareDto: ShareToolSecretWithUserDto,
+  ) {
+    return this.toolsService.shareSecretWithUser(id, shareDto);
+  }
+
+  @Post('secrets/:id/share/company-role')
+  shareSecretWithCompanyRole(
+    @Param('id') id: string,
+    @Body() shareDto: ShareToolSecretWithCompanyRoleDto,
+  ) {
+    return this.toolsService.shareSecretWithCompanyRole(id, shareDto);
+  }
+
+  @Delete('secrets/:id/share/user/:userId')
+  revokeSecretFromUser(
+    @Param('id') id: string,
+    @Param('userId') userId: string,
+  ) {
+    return this.toolsService.revokeSecretFromUser(id, userId);
+  }
+
+  @Delete('secrets/:id/share/company-role/:companyId/:roleId')
+  revokeSecretFromCompanyRole(
+    @Param('id') id: string,
+    @Param('companyId') companyId: string,
+    @Param('roleId') roleId: string,
+  ) {
+    return this.toolsService.revokeSecretFromCompanyRole(id, companyId, roleId);
   }
 }

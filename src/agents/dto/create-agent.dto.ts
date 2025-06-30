@@ -1,141 +1,117 @@
-import { ApiProperty } from '@nestjs/swagger';
 import {
+  IsArray,
   IsBoolean,
-  IsJSON,
+  IsEnum,
   IsOptional,
   IsString,
   IsUUID,
+  IsUrl,
+  Matches,
+  MaxLength,
+  MinLength,
 } from 'class-validator';
 
+enum MediaType {
+  TEXT = 'text',
+  IMAGE = 'image',
+  AUDIO = 'audio',
+  VIDEO = 'video',
+  FILE = 'file',
+}
+
+enum AIModel {
+  GPT35 = 'gpt-3.5-turbo',
+  GPT4 = 'gpt-4',
+  GPT4TURBO = 'gpt-4-turbo',
+  CLAUDE2 = 'claude-2',
+}
+
 export class CreateAgentDto {
-  @ApiProperty({
-    description: 'Owner user ID',
-    example: '00000000-0000-0000-0000-000000000000',
-  })
   @IsUUID()
   @IsOptional()
   user_id?: string;
 
-  @ApiProperty({
-    description: 'Associated company for multi-tenancy',
-    example: '00000000-0000-0000-0000-000000000000',
-  })
   @IsUUID()
   @IsOptional()
   company_id?: string;
 
-  @ApiProperty({ description: 'Agent display name', example: 'Sales Bot' })
   @IsString()
+  @MinLength(3)
+  @MaxLength(100)
   agent_name: string;
 
-  @ApiProperty({
-    description: 'Agent description and purpose',
-    example: 'An AI-powered sales assistant.',
-  })
   @IsString()
   @IsOptional()
+  @MaxLength(1000)
   description?: string;
 
-  @ApiProperty({
-    description: 'API route path for agent access',
-    example: '/api/agents/sales-bot',
-  })
   @IsString()
   @IsOptional()
+  @Matches(/^\/api\/agents\/[a-z0-9-]+$/, {
+    message:
+      'Invalid route path format. Must start with /api/agents/ followed by lowercase letters, numbers, and hyphens',
+  })
   route_path?: string;
 
-  @ApiProperty({
-    description: 'Agent personality/style configuration',
-    example: 'Friendly and helpful',
-  })
   @IsString()
   @IsOptional()
+  @MaxLength(200)
   agent_style?: string;
 
-  @ApiProperty({ description: 'Agent active/inactive status', example: true })
   @IsBoolean()
   @IsOptional()
   on_status?: boolean;
 
-  @ApiProperty({
-    description: 'Public access hash for sharing',
-    example: 'abc123xyz',
-  })
   @IsString()
   @IsOptional()
+  @Matches(/^[a-zA-Z0-9_]{8,32}$/, {
+    message:
+      'Invalid hash format. Must be 8-32 characters of letters, numbers, and underscores',
+  })
   public_hash?: string;
 
-  @ApiProperty({ description: 'Public visibility flag', example: false })
   @IsBoolean()
   @IsOptional()
   is_public?: boolean;
 
-  @ApiProperty({
-    description: 'Agent avatar image URL',
-    example: 'https://example.com/avatar.png',
+  @IsUrl({
+    protocols: ['http', 'https'],
+    require_protocol: true,
   })
-  @IsString()
   @IsOptional()
   avatar_url?: string;
 
-  @ApiProperty({
-    description: 'Agent category classification',
-    example: '00000000-0000-0000-0000-000000000000',
-  })
   @IsUUID()
   @IsOptional()
   category_id?: string;
 
-  @ApiProperty({
-    description: 'Base template used',
-    example: '00000000-0000-0000-0000-000000000000',
-  })
   @IsUUID()
   @IsOptional()
   template_id?: string;
 
-  @ApiProperty({
-    description: 'Associated workflow',
-    example: '00000000-0000-0000-0000-000000000000',
-  })
   @IsUUID()
   @IsOptional()
   workflow_id?: string;
 
-  @ApiProperty({
-    description: 'Memory/context retention enabled',
-    example: true,
-  })
   @IsBoolean()
   @IsOptional()
   use_memory?: boolean;
 
-  @ApiProperty({
-    description: 'Supported input media types',
-    example: '["text", "image"]',
-  })
-  @IsJSON()
+  @IsArray()
+  @IsEnum(MediaType, { each: true })
   @IsOptional()
-  media_input?: any;
+  media_input?: MediaType[];
 
-  @ApiProperty({
-    description: 'Supported output media types',
-    example: '["text"]',
-  })
-  @IsJSON()
+  @IsArray()
+  @IsEnum(MediaType, { each: true })
   @IsOptional()
-  media_output?: any;
+  media_output?: MediaType[];
 
-  @ApiProperty({ description: 'Tool usage enabled', example: false })
   @IsBoolean()
   @IsOptional()
   use_tool?: boolean;
 
-  @ApiProperty({
-    description: 'Default AI model to use',
-    example: 'gpt-4',
-  })
-  @IsString()
+  @IsEnum(AIModel)
   @IsOptional()
-  model_default?: string;
+  model_default?: AIModel;
 }

@@ -1,81 +1,154 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { Prisma, Tool } from '@prisma/client';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  CreateToolSecretDto,
+  ShareToolSecretWithCompanyRoleDto,
+  ShareToolSecretWithUserDto,
+} from './dto/create-tool-secret.dto';
 import { CreateToolDto } from './dto/create-tool.dto';
+import { UpdateToolSecretDto } from './dto/update-tool-secret.dto';
 import { UpdateToolDto } from './dto/update-tool.dto';
 
 @Injectable()
 export class ToolsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createToolDto: CreateToolDto, userId: string): Promise<Tool> {
-    const { name, company_id } = createToolDto;
-
-    if (!name || name.trim().length === 0) {
-      throw new BadRequestException('Tool name is required');
-    }
-
-    const where: Prisma.ToolWhereInput = {
-      name,
-    };
-
-    if (company_id) {
-      where.company_id = company_id;
-    } else {
-      where.user_id = userId;
-    }
-
-    const existingTool = await this.prisma.tool.findFirst({
-      where,
-    });
-
-    if (existingTool) {
-      throw new ConflictException(
-        'Tool name already exists for this user or company',
-      );
-    }
-
+  async create(createToolDto: CreateToolDto) {
     return this.prisma.tool.create({
-      data: {
-        ...createToolDto,
-        user_id: userId,
+      data: createToolDto,
+      include: {
+        company: true,
       },
     });
   }
 
-  async findAll(): Promise<Tool[]> {
-    return this.prisma.tool.findMany();
-  }
+  async findAll(userId?: string, companyId?: string) {
+    const where = {
+      OR: [{ is_public: true }, { user_id: userId }, { company_id: companyId }],
+    };
 
-  async findOne(id: string): Promise<Tool> {
-    const tool = await this.prisma.tool.findUnique({
-      where: { tool_id: id },
+    return this.prisma.tool.findMany({
+      where,
+      include: {
+        company: true,
+      },
     });
-
-    if (!tool) {
-      throw new NotFoundException(`Tool with ID ${id} not found`);
-    }
-
-    return tool;
   }
 
-  async update(id: string, updateToolDto: UpdateToolDto): Promise<Tool> {
-    await this.findOne(id);
+  async findOne(toolId: string) {
+    return this.prisma.tool.findUnique({
+      where: { tool_id: toolId },
+      include: {
+        company: true,
+        tool_secrets: {
+          select: {
+            secret_id: true,
+            description: true,
+            created_at: true,
+            updated_at: true,
+          },
+        },
+      },
+    });
+  }
+
+  async update(toolId: string, updateToolDto: UpdateToolDto) {
     return this.prisma.tool.update({
-      where: { tool_id: id },
-      data: { ...updateToolDto },
+      where: { tool_id: toolId },
+      data: updateToolDto,
+      include: {
+        company: true,
+      },
     });
   }
 
-  async remove(id: string): Promise<Tool> {
-    await this.findOne(id);
+  async remove(toolId: string) {
     return this.prisma.tool.delete({
-      where: { tool_id: id },
+      where: { tool_id: toolId },
+    });
+  }
+
+  // Tool Secret Management
+  async createSecret(userId: string, createToolSecretDto: CreateToolSecretDto) {
+    return this.prisma.toolSecret.create({
+      data: {
+        ...createToolSecretDto,
+        owner_user_id: userId,
+      },
+      include: {
+        tool: true,
+      },
+    });
+  }
+
+  async updateSecret(
+    secretId: string,
+    updateToolSecretDto: UpdateToolSecretDto,
+  ) {
+    return this.prisma.toolSecret.update({
+      where: { secret_id: secretId },
+      data: updateToolSecretDto,
+      include: {
+        tool: true,
+      },
+    });
+  }
+
+  async removeSecret(secretId: string) {
+    return this.prisma.toolSecret.delete({
+      where: { secret_id: secretId },
+    });
+  }
+
+  async shareSecretWithUser(
+    secretId: string,
+    shareDto: ShareToolSecretWithUserDto,
+  ) {
+    return this.prisma.toolSecretShareUser.create({
+      data: {
+        secret_id: secretId,
+        shared_with_user_id: shareDto.shared_with_user_id,
+      },
+    });
+  }
+
+  async shareSecretWithCompanyRole(
+    secretId: string,
+    shareDto: ShareToolSecretWithCompanyRoleDto,
+  ) {
+    return this.prisma.toolSecretShareCompanyRole.create({
+      data: {
+        secret_id: secretId,
+        shared_with_company_id: shareDto.shared_with_company_id,
+        shared_with_role_id: shareDto.shared_with_role_id,
+      },
+    });
+  }
+
+  async revokeSecretFromUser(secretId: string, userId: string) {
+    return this.prisma.toolSecretShareUser.delete({
+      where: {
+        secret_id_shared_with_user_id: {
+          secret_id: secretId,
+          shared_with_user_id: userId,
+        },
+      },
+    });
+  }
+
+  async revokeSecretFromCompanyRole(
+    secretId: string,
+    companyId: string,
+    roleId: string,
+  ) {
+    return this.prisma.toolSecretShareCompanyRole.delete({
+      where: {
+        secret_id_shared_with_company_id_shared_with_role_id: {
+          secret_id: secretId,
+          shared_with_company_id: companyId,
+          shared_with_role_id: roleId,
+        },
+      },
     });
   }
 }

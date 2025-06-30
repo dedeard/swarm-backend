@@ -1,178 +1,96 @@
-import { ApiProperty } from '@nestjs/swagger';
 import {
   IsBoolean,
+  IsObject,
   IsOptional,
   IsString,
-  IsUUID,
   IsUrl,
 } from 'class-validator';
 
 export class CreateToolDto {
-  @ApiProperty({
-    description: 'Tool owner',
-    required: false,
-  })
-  @IsUUID()
-  @IsOptional()
-  user_id?: string;
-
-  @ApiProperty({
-    description: 'Associated company for multi-tenancy',
-    required: false,
-  })
-  @IsUUID()
-  @IsOptional()
-  company_id?: string;
-
-  @ApiProperty({ description: 'Tool display name' })
   @IsString()
   name: string;
 
-  @ApiProperty({
-    description: 'Tool description',
-    required: false,
-  })
-  @IsString()
   @IsOptional()
+  @IsString()
   description?: string;
 
-  @ApiProperty({
-    description: 'Current version',
-    required: false,
-  })
-  @IsString()
   @IsOptional()
+  @IsString()
   version?: string;
 
-  @ApiProperty({
-    description: 'Command to install the tool',
-    required: false,
-  })
-  @IsString()
   @IsOptional()
+  @IsString()
   cmd_install_?: string;
 
-  @ApiProperty({
-    description: 'Port number for the tool',
-    required: false,
-  })
-  @IsString()
   @IsOptional()
+  @IsString()
   port?: string;
 
-  @ApiProperty({
-    description: 'Connection method (e.g., sse, stdio)',
-    required: false,
-  })
-  @IsString()
   @IsOptional()
+  @IsString()
   method?: string;
 
-  @ApiProperty({
-    description: 'Environment variables configuration',
-    required: false,
-  })
   @IsOptional()
+  @IsObject()
   env?: Record<string, any>;
 
-  @ApiProperty({
-    description: 'Required environment variables',
-    required: false,
-  })
   @IsOptional()
+  @IsObject()
   required_env?: Record<string, any>;
 
-  @ApiProperty({
-    description: 'Tool availability status',
-    required: false,
-  })
-  @IsString()
   @IsOptional()
+  @IsString()
   status?: string;
 
-  @ApiProperty({
-    description: 'Tool logo URL',
-    required: false,
-  })
-  @IsUrl()
   @IsOptional()
+  @IsString()
+  user_id?: string;
+
+  @IsOptional()
+  @IsString()
+  company_id?: string;
+
+  @IsOptional()
+  @IsUrl()
   logo_url?: string;
 
-  @ApiProperty({
-    description: 'URL-friendly identifier',
-    required: false,
-  })
-  @IsString()
   @IsOptional()
+  @IsString()
   slug?: string;
 
-  @ApiProperty({
-    description: 'Tool website',
-    required: false,
-  })
-  @IsUrl()
   @IsOptional()
+  @IsUrl()
   website?: string;
 
-  @ApiProperty({
-    description: 'Tool developer/vendor',
-    required: false,
-  })
-  @IsString()
   @IsOptional()
+  @IsString()
   developer?: string;
 
-  @ApiProperty({
-    description: 'Source code repository',
-    required: false,
-  })
-  @IsString()
   @IsOptional()
+  @IsUrl()
   source?: string;
 
-  @ApiProperty({
-    description: 'License type',
-    required: false,
-  })
-  @IsString()
   @IsOptional()
+  @IsString()
   license?: string;
 
-  @ApiProperty({
-    description: 'Extended description',
-    required: false,
-  })
-  @IsString()
   @IsOptional()
+  @IsString()
   detailed_description?: string;
 
-  @ApiProperty({
-    description: 'Security considerations',
-    required: false,
-  })
-  @IsString()
   @IsOptional()
+  @IsString()
   security_note?: string;
 
-  @ApiProperty({
-    description: 'Usage recommendations',
-    required: false,
-  })
   @IsOptional()
+  @IsObject()
   usage_suggestions?: Record<string, any>;
 
-  @ApiProperty({
-    description: 'Available functions/capabilities',
-    required: false,
-  })
   @IsOptional()
+  @IsObject()
   functions?: Record<string, any>;
 
-  @ApiProperty({
-    description: 'Public visibility flag',
-    required: false,
-  })
-  @IsBoolean()
   @IsOptional()
+  @IsBoolean()
   is_public?: boolean;
 }
