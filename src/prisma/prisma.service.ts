@@ -19,6 +19,25 @@ export class PrismaService
       },
     });
 
+    // Add query performance middleware
+    this.$use(async (params, next) => {
+      const before = Date.now();
+      const result = await next(params);
+      const after = Date.now();
+      const duration = after - before;
+
+      if (duration > 100) {
+        // Log slow queries (>100ms)
+        console.warn(`Slow query detected (${duration}ms):`, {
+          model: params.model,
+          action: params.action,
+          args: params.args,
+        });
+      }
+
+      return result;
+    });
+
     // Reuse connection in Lambda environment
     if (process.env.AWS_LAMBDA_FUNCTION_VERSION) {
       if (!PrismaService.instance) {

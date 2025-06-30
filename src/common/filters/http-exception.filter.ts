@@ -4,14 +4,22 @@ import {
   ExceptionFilter,
   HttpException,
   HttpStatus,
+  Inject,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
+import { LoggingService } from '../services/logging.service';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
+  constructor(
+    @Inject(LoggingService)
+    private readonly loggingService: LoggingService,
+  ) {}
+
   catch(exception: any, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
     const status =
       exception instanceof HttpException
         ? exception.getStatus()
@@ -48,6 +56,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
         message = errorMessage;
       }
     }
+
+    // Log the error with detailed information
+    this.loggingService.logError(exception, 'HttpException');
+    this.loggingService.logRequest(request, 'Failed Request');
 
     // Custom response format
     response.status(status).send({
