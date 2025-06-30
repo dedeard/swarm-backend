@@ -21,20 +21,20 @@ export class RequestLoggerMiddleware implements NestMiddleware {
       );
 
       // Log additional details for non-200 responses
-      if (statusCode >= 400) {
-        this.logger.warn({
-          method,
-          url: originalUrl,
-          statusCode,
-          userAgent,
-          ip,
-          requestId,
-          headers: request.headers,
-          query: request.query,
-          body: request.body,
-          duration,
-        });
-      }
+      // if (statusCode >= 400) {
+      //   this.logger.warn({
+      //     method,
+      //     url: originalUrl,
+      //     statusCode,
+      //     userAgent,
+      //     ip,
+      //     requestId,
+      //     headers: request.headers,
+      //     query: request.query,
+      //     body: request.body,
+      //     duration,
+      //   });
+      // }
     });
 
     next();

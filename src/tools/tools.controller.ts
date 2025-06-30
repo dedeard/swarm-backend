@@ -29,14 +29,15 @@ import { ToolsService } from './tools.service';
 @ApiTags('tools')
 @Controller('tools')
 @UseGuards(AuthGuard)
+// @CompanyMode()
 export class ToolsController {
   constructor(private readonly toolsService: ToolsService) {}
 
   @Post()
-  @RolesAndPermissions(
-    [Role.ADMIN, Role.TOOL_MANAGER],
-    [Permission.TOOL_CREATE],
-  )
+  // @RolesAndPermissions(
+  //   [Role.ADMIN, Role.TOOL_MANAGER],
+  //   [Permission.TOOL_CREATE],
+  // )
   @ApiOperation({ summary: 'Create a new tool' })
   @ApiResponse({
     status: HttpStatus.CREATED,

@@ -5,9 +5,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { ScopeType } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PERMISSIONS_KEY } from '../decorators/auth.decorator';
 import { Permission } from '../enums/permission.enum';
+import { IS_COMPANY_MODE_KEY } from './mode.guard';
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
@@ -28,58 +30,87 @@ export class PermissionGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest();
     const user = request.user;
-    const companyId = request.headers['x-company-id'];
 
-    if (!user || !companyId) {
-      throw new UnauthorizedException('User and company context required');
+    if (!user) {
+      throw new UnauthorizedException('User context required');
     }
 
-    // First check cache
-    const cachedPermissions = await this.checkPermissionCache(
-      user.id,
-      requiredPermissions,
+    // Check if we're in company mode
+    const isCompanyMode = this.reflector.getAllAndOverride<boolean>(
+      IS_COMPANY_MODE_KEY,
+      [context.getHandler(), context.getClass()],
     );
 
-    if (cachedPermissions.length === requiredPermissions.length) {
-      return true;
-    }
+    if (isCompanyMode) {
+      const companyId = request.headers['x-company-id'];
+      if (!companyId) {
+        throw new UnauthorizedException(
+          'Company context required in company mode',
+        );
+      }
 
-    // If not in cache, check database
-    const userCompany = await this.prisma.userCompany.findUnique({
-      where: {
-        user_id_company_id: {
-          user_id: user.id,
-          company_id: companyId,
+      // First check cache
+      const cachedPermissions = await this.checkPermissionCache(
+        user.id,
+        requiredPermissions,
+      );
+
+      if (cachedPermissions.length === requiredPermissions.length) {
+        return true;
+      }
+
+      // If not in cache, check database
+      const userCompany = await this.prisma.userCompany.findUnique({
+        where: {
+          user_id_company_id: {
+            user_id: user.id,
+            company_id: companyId,
+          },
         },
-      },
-      include: {
-        role: {
-          include: {
-            role_function_permissions: {
-              include: {
-                permission: true,
+        include: {
+          role: {
+            include: {
+              role_function_permissions: {
+                include: {
+                  permission: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      });
 
-    if (!userCompany?.role) {
+      if (!userCompany?.role) {
+        return false;
+      }
+
+      const userPermissions = userCompany.role.role_function_permissions.map(
+        (rfp) => rfp.permission?.function_name,
+      );
+
+      // Cache the permissions
+      await this.cachePermissions(user.id, userPermissions as Permission[]);
+
+      // Check if user has all required permissions
+      return requiredPermissions.every((permission) =>
+        userPermissions.includes(permission),
+      );
+    } else {
+      // Individual mode - check if user owns the tool
+      const tool = await this.prisma.tool.findFirst({
+        where: {
+          scope_type: ScopeType.INDIVIDUAL,
+          owner_id: user.id,
+        },
+      });
+
+      // In individual mode, if the user is the owner, they have all permissions
+      if (tool && tool.owner_id === user.id) {
+        return true;
+      }
+
       return false;
     }
-
-    const userPermissions = userCompany.role.role_function_permissions.map(
-      (rfp) => rfp.permission?.function_name,
-    );
-
-    // Cache the permissions
-    await this.cachePermissions(user.id, userPermissions as Permission[]);
-
-    // Check if user has all required permissions
-    return requiredPermissions.every((permission) =>
-      userPermissions.includes(permission),
-    );
   }
 
   private async checkPermissionCache(
