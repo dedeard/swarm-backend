@@ -6,7 +6,6 @@ import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
-import { LoggingService } from './common/services/logging.service';
 
 async function bootstrap() {
   // Create the app
@@ -32,8 +31,7 @@ async function bootstrap() {
     }),
   );
 
-  const loggingService = app.get(LoggingService);
-  app.useGlobalFilters(new HttpExceptionFilter(loggingService));
+  app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalInterceptors(new ResponseInterceptor());
 
   const configService = app.get(ConfigService);
