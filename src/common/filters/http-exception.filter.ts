@@ -25,7 +25,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    // Extract the original response (could be string, array, or object)
+    // Extract the original response
     const exceptionResponse =
       exception instanceof HttpException
         ? exception.getResponse()
@@ -34,26 +34,51 @@ export class HttpExceptionFilter implements ExceptionFilter {
     let message = 'Internal server error';
     let errorsObj: Record<string, string> = {};
 
-    // Handle different message structures
     if (typeof exceptionResponse === 'string') {
       message = exceptionResponse;
     } else if (exceptionResponse && typeof exceptionResponse === 'object') {
-      const errorMessage = exceptionResponse['message'];
+      const errorResponse = exceptionResponse as any;
 
-      if (Array.isArray(errorMessage)) {
-        // Handle validation errors array
-        errorMessage.forEach((error: string) => {
-          // Extract property and message from validation error
-          const matches = error.match(/^([^:]+?)(?:\s+)(.+)$/);
-          if (matches) {
-            const [, property, errorMsg] = matches;
-            errorsObj[property] = errorMsg;
+      // Handle class-validator errors
+      if (Array.isArray(errorResponse.message)) {
+        errorResponse.message.forEach((error: any) => {
+          if (typeof error === 'string') {
+            // Handle string error messages
+            const matches = error.match(/^([^:]+?)(?:\s+)(.+)$/);
+            if (matches) {
+              const [, property, errorMsg] = matches;
+              errorsObj[property] = errorMsg;
+            }
+          } else if (error.property && error.constraints) {
+            // Handle class-validator detailed errors
+            const constraints = Object.values(error.constraints) as string[];
+            errorsObj[error.property] = constraints[0] || 'Invalid value';
           }
         });
-        // Set first error message for meta
-        message = Object.values(errorsObj)[0] || errorMessage[0] || message;
-      } else if (errorMessage) {
-        message = errorMessage;
+
+        // If no errors were extracted, try to parse the raw message
+        if (Object.keys(errorsObj).length === 0) {
+          errorResponse.message.forEach((error: string) => {
+            const parts = error.split(' ');
+            if (parts.length >= 2) {
+              const property = parts[0];
+              const errorMsg = parts.slice(1).join(' ');
+              errorsObj[property] = errorMsg;
+            }
+          });
+        }
+
+        message =
+          Object.values(errorsObj)[0] || errorResponse.message[0] || message;
+      } else if (errorResponse.message?.constraints) {
+        // Handle single property validation error
+        const constraints = Object.values(
+          errorResponse.message.constraints,
+        ) as string[];
+        message = constraints[0] || message;
+        errorsObj[errorResponse.message.property] = message;
+      } else if (errorResponse.message) {
+        message = errorResponse.message;
       }
     }
 
@@ -61,7 +86,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     this.loggingService.logError(exception, 'HttpException');
     this.loggingService.logRequest(request, 'Failed Request');
 
-    // Custom response format
+    // Format the response to match the desired structure
     response.status(status).send({
       data: {
         errors:
