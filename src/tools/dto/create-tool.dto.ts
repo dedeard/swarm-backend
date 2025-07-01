@@ -1,5 +1,6 @@
 import {
   IsBoolean,
+  IsNumber,
   IsObject,
   IsOptional,
   IsString,
@@ -20,11 +21,11 @@ export class CreateToolDto {
 
   @IsOptional()
   @IsString()
-  cmd_install_?: string;
+  cmd_install?: string;
 
   @IsOptional()
-  @IsString()
-  port?: string;
+  @IsNumber()
+  port?: number;
 
   @IsOptional()
   @IsString()
@@ -35,10 +36,6 @@ export class CreateToolDto {
   env?: Record<string, any>;
 
   @IsOptional()
-  @IsObject()
-  required_env?: Record<string, any>;
-
-  @IsOptional()
   @IsString()
   status?: string;
 
@@ -46,9 +43,8 @@ export class CreateToolDto {
   @IsString()
   user_id?: string;
 
-  @IsOptional()
   @IsString()
-  company_id?: string;
+  company_id: string;
 
   @IsOptional()
   @IsUrl()

@@ -13,6 +13,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "postinstall": "prisma generate",
+    "seed:categories-tools": "ts-node prisma/seed/categories-tools.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -46,6 +47,7 @@
     "type-fest": "^4.41.0"
   },
   "devDependencies": {
+    "@faker-js/faker": "^9.8.0",
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",

@@ -23,12 +23,26 @@ export class ToolsService {
   }
 
   async findAll(userId?: string, companyId?: string) {
-    const where = {
-      OR: [{ is_public: true }, { user_id: userId }, { company_id: companyId }],
+    type Condition = {
+      is_public?: boolean;
+      user_id?: string;
+      company_id?: string;
     };
 
+    const conditions: Condition[] = [{ is_public: true }];
+
+    if (userId) {
+      conditions.push({ user_id: userId });
+    }
+
+    if (companyId) {
+      conditions.push({ company_id: companyId });
+    }
+
     return this.prisma.tool.findMany({
-      where,
+      where: {
+        OR: conditions,
+      },
       include: {
         company: true,
       },

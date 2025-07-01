@@ -113,28 +113,60 @@ model AgentPrompt {
   @@schema("swarm-agent")
 }
 
+// === AGENT-CHAT-HISTORY ===
+// From: prisma/schemas/swarm-agent/agent-chat-history.prisma
+
+// === AGENT CHAT HISTORY SCHEMA ===
+// Chat message history for agent conversations
+
+/// Chat message history for agent conversations
+model AgentChatHistory {
+  chat_history_id    BigInt   @id @default(autoincrement()) /// Auto-increment ID for chat message ordering
+  agent_log_id       String   @db.Uuid /// Reference to the agent log/conversation (now UUID)
+  content            String /// Message content
+  role               String /// Message role (user, agent, system)
+  user_id            String?  @db.Uuid /// User who sent the message (if role=user)
+  input_tokens       Int? /// Input tokens for this message
+  output_tokens      Int? /// Output tokens for this message
+  processing_time_ms Int? /// Processing time in milliseconds
+  created_at         DateTime @default(now()) @db.Timestamptz(6)
+  metadata           Json? /// Additional message metadata
+
+  // Relations
+  agent_log AgentLog @relation("AgentLogChatMessages", fields: [agent_log_id], references: [agent_log_id], onDelete: Cascade)
+
+  @@index([agent_log_id], name: "idx_chat_history_agent_log_id")
+  @@index([role], name: "idx_chat_history_role")
+  @@index([user_id], name: "idx_chat_history_user_id")
+  @@index([created_at], name: "idx_chat_history_created_at")
+  @@index([agent_log_id, created_at], name: "idx_chat_history_log_timestamp")
+  @@map("chat_history")
+  @@schema("swarm-agent")
+}
+
 // === AGENT-LOGS ===
 // From: prisma/schemas/swarm-agent/agent-logs.prisma
 
 // === AGENT LOGS SCHEMA ===
-// Agent usage and token consumption logs
+// Agent usage and token consumption logs with normalized chat history
 
 /// Agent usage and token consumption logs
 model AgentLog {
-  agent_log_id    BigInt   @id @default(autoincrement())
-  agent_id        String?  @db.Uuid /// Agent that was used
+  agent_log_id    String   @id @default(uuid()) @db.Uuid /// Secure UUID instead of predictable auto-increment
+  agent_id        String   @db.Uuid /// Agent that was used
   user_id         String?  @db.Uuid /// User who used the agent
   company_id      String?  @db.Uuid /// Company context
+  session_title   String?  @db.VarChar(255) /// Human-readable title for this conversation
   input_token     Int? /// Input tokens consumed
   output_token    Int? /// Output tokens consumed
   embedding_token Int? /// Embedding tokens consumed
   pricing         Decimal? @db.Decimal /// Cost calculation
-  chat_history    Json? /// Conversation context
   created_at      DateTime @default(now()) @db.Timestamptz(6)
 
   // Relations
-  agent   Agent?   @relation(fields: [agent_id], references: [agent_id], onDelete: Cascade)
-  company Company? @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
+  agent         Agent?             @relation(fields: [agent_id], references: [agent_id], onDelete: Cascade)
+  company       Company?           @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
+  chat_messages AgentChatHistory[] @relation("AgentLogChatMessages") /// Chat messages in this conversation
 
   @@index([agent_id], name: "idx_agent_logs_agent_id")
   @@index([user_id], name: "idx_agent_logs_user_id")
@@ -1439,11 +1471,11 @@ model Tool {
   name                 String /// Tool display name
   description          String? /// Tool description
   version              String? /// Current version
-  cmd_install_         String? /// Command to install the tool
-  port                 String? /// Port number for the tool
+  cmd_run              String? /// Command to run the tool
+  cmd_install          String? /// Command to install the tool
+  port                 Int?     @default(autoincrement()) /// Port number for the tool
   method               String? /// Connection method (e.g., sse, stdio)
   env                  Json? /// Environment variables configuration
-  required_env         Json? /// Required environment variables
   status               String? /// Tool availability status
   user_id              String?  @db.Uuid /// Tool owner
   company_id           String?  @db.Uuid /// Associated company
@@ -1528,6 +1560,26 @@ model ToolSecretShareCompanyRole {
 
   @@id([secret_id, shared_with_company_id, shared_with_role_id])
   @@map("tool_secret_shares_company_roles")
+  @@schema("swarm-tool")
+}
+
+// === VAULT ===
+// From: prisma/schemas/swarm-tool/vault.prisma
+
+// === VAULT SCHEMA ===
+
+// Logging table for vault operations
+model vault_operation_log {
+  log_id         Int      @id @default(autoincrement())
+  operation_type String
+  key_name       String
+  tool_id        String?  @db.Uuid
+  version_index  Int?
+  success        Boolean
+  error_message  String?
+  timestamp      DateTime @default(now())
+
+  @@map("vault_operation_log")
   @@schema("swarm-tool")
 }
 
