@@ -3,6 +3,7 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AgentCategoriesModule } from './agent-categories/agent-categories.module';
+import { AgentLogsModule } from './agent-logs/agent-logs.module';
 import { AgentsModule } from './agents/agents.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -42,6 +43,7 @@ import { ToolsModule } from './tools/tools.module';
     AgentCategoriesModule,
     HealthModule,
     ToolsModule,
+    AgentLogsModule,
   ],
   controllers: [AppController],
   providers: [AppService, LoggingService],
