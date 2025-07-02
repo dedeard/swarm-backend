@@ -21,7 +21,11 @@ export class AgentsService {
   }
 
   async findAll(): Promise<Agent[]> {
-    return this.prisma.agent.findMany();
+    return this.prisma.agent.findMany({
+      include: {
+        category: true,
+      },
+    });
   }
 
   async findOne(id: string): Promise<Agent | null> {
