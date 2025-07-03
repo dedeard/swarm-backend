@@ -4,7 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import * as jwt from 'jsonwebtoken';
 import { Strategy } from 'passport-custom';
-import { SupabaseJwtPayload } from './types';
+import { AuthPayload } from './types';
 
 @Injectable()
 export class SupabaseStrategy extends PassportStrategy(Strategy, 'supabase') {
@@ -14,7 +14,7 @@ export class SupabaseStrategy extends PassportStrategy(Strategy, 'supabase') {
     super();
   }
 
-  async validate(req: Request): Promise<SupabaseJwtPayload> {
+  async validate(req: Request): Promise<AuthPayload> {
     if (process.env.NODE_ENV !== 'production') {
       return {
         iss: 'https://lesrfxvikljgupwlzmvk.supabase.co/auth/v1',
@@ -62,7 +62,7 @@ export class SupabaseStrategy extends PassportStrategy(Strategy, 'supabase') {
       const data = jwt.verify(token, secret, {
         algorithms: ['HS256'],
       });
-      return data as SupabaseJwtPayload;
+      return data as AuthPayload;
     } catch (err) {
       this.logger.error(`JWT verification failed - ${err.message}`);
       throw new UnauthorizedException('Invalid or expired token.');

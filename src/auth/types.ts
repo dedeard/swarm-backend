@@ -35,7 +35,7 @@ export interface UserMetadata {
 /**
  * Main interface for the decoded Supabase JWT payload.
  */
-export interface SupabaseJwtPayload {
+export interface AuthPayload {
   iss: string;
   sub: string;
   aud: string;
