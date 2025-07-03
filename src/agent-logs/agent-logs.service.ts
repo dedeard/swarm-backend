@@ -27,11 +27,7 @@ export class AgentLogsService {
         agent_log_id: agentLogId,
       },
       include: {
-        chat_messages: {
-          orderBy: {
-            created_at: 'asc',
-          },
-        },
+        chat_messages: true,
       },
     });
 
