@@ -14,7 +14,6 @@ import {
 import { Agent as PrismaAgent } from '@prisma/client';
 import { AuthGuard } from '../auth/auth.guard';
 import { User } from '../auth/user.decorator';
-import { CompanyId } from '../common/decorators/company-id.decorator';
 import { AgentsService } from './agents.service';
 import { CreateAgentDto } from './dto/create-agent.dto';
 import { UpdateAgentDto } from './dto/update-agent.dto';
@@ -33,9 +32,8 @@ export class AgentsController {
   }
 
   @Get()
-  findAll(@CompanyId() companyId?: string): Promise<PrismaAgent[]> {
-    console.log(companyId);
-    return this.agentsService.findAll();
+  findAll(@User('sub') userId: string): Promise<PrismaAgent[]> {
+    return this.agentsService.findAll(userId);
   }
 
   @Get(':id')

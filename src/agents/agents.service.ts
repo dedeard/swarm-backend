@@ -20,8 +20,9 @@ export class AgentsService {
     });
   }
 
-  async findAll(): Promise<Agent[]> {
+  async findAll(user_id: string): Promise<Agent[]> {
     return this.prisma.agent.findMany({
+      where: { user_id },
       include: {
         category: true,
       },
