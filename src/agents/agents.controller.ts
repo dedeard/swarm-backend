@@ -26,7 +26,7 @@ export class AgentsController {
   @Post()
   create(
     @Body() createAgentDto: CreateAgentDto,
-    @User('userId') userId: string,
+    @User('sub') userId: string,
   ): Promise<PrismaAgent> {
     return this.agentsService.create(createAgentDto, userId);
   }
